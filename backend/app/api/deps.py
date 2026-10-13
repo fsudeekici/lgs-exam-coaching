@@ -41,6 +41,14 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: DbSessio
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+def get_token_payload(token: Annotated[str, Depends(oauth2_scheme)], user: CurrentUser) -> dict:
+    """The claims of the token the (already checked) logged-in user sent."""
+    return decode_access_token(token)
+
+
+TokenPayload = Annotated[dict, Depends(get_token_payload)]
+
+
 def require_role(*roles: Role) -> Callable[[User], User]:
     """Dependency that only lets users with one of the given roles through.
 

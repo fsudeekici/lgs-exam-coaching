@@ -142,11 +142,12 @@ const json = (method: string, body: unknown): RequestInit => ({
 export const errorMessage = (err: unknown) =>
   err instanceof ApiError ? err.message : 'Sunucuya ulaşılamadı'
 
-export async function login(email: string, password: string): Promise<void> {
+/** With `rememberMe` the session lasts 30 days instead of the normal login time. */
+export async function login(email: string, password: string, rememberMe: boolean): Promise<void> {
   // The backend uses the OAuth2 password form, which names the email field "username".
   const { access_token } = await request<{ access_token: string }>('/auth/login', {
     method: 'POST',
-    body: new URLSearchParams({ username: email, password }),
+    body: new URLSearchParams({ username: email, password, remember_me: String(rememberMe) }),
   })
   setToken(access_token)
 }

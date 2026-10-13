@@ -111,9 +111,12 @@ Net = correct − wrong / 3. `exam_results.net` is a generated column in Postgre
   it before using the app; the date is stored. The notice is also public at `/kvkk`.
 - A student cannot log in until the admin ticks "Veli onayı alındı" on the student form and
   enters the date the parent's consent was received. Unticking it later signs the student out.
+- A login lasts 8 hours (`ACCESS_TOKEN_EXPIRE_MINUTES`), or 30 days (`REMEMBER_ME_DAYS`) when
+  "Beni hatırla" is ticked on the login form. "Çıkış yap" removes the session from that device.
+- Passwords need at least 6 characters; there are no other rules.
 - Users change their own password under "Hesabım" (click your name in the header). The admin
   resets a student's or parent's password from the edit form on the Öğrenciler / Veliler pages.
-  Any password change signs that user out everywhere else.
+  Any password change signs that user out everywhere else, remembered sessions included.
 - After 5 wrong passwords for one email within 15 minutes, logins for that email are blocked
   until the window passes (`LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_MINUTES`). The admin sees a
   "Giriş engelli" badge on that user and can lift the block from their edit form.

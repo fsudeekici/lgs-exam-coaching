@@ -8,6 +8,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -19,7 +20,7 @@ export default function LoginPage() {
     setError(null)
     setSubmitting(true)
     try {
-      const me = await login(email, password)
+      const me = await login(email, password, rememberMe)
       navigate(`/${me.role}`, { replace: true })
     } catch (err) {
       setError(errorMessage(err))
@@ -40,6 +41,7 @@ export default function LoginPage() {
           E-posta
           <input
             type="email"
+            name="username"
             autoComplete="username"
             required
             value={email}
@@ -52,12 +54,19 @@ export default function LoginPage() {
           Şifre
           <input
             type="password"
+            name="password"
             autoComplete="current-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={inputClass}
           />
+        </label>
+
+        <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" name="remember_me" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+          Beni hatırla
+          <span className="text-slate-500">(30 gün)</span>
         </label>
 
         {error && (

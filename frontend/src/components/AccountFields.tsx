@@ -47,9 +47,9 @@ export default function AccountFields({ value, onChange, editing }: Props) {
         <input
           type="password"
           required={!editing}
-          minLength={8}
+          minLength={6}
           autoComplete="new-password"
-          placeholder={editing ? 'Değiştirmek için yazın' : 'En az 8 karakter'}
+          placeholder={editing ? 'Değiştirmek için yazın' : 'En az 6 karakter'}
           value={value.password}
           onChange={(e) => onChange({ password: e.target.value })}
           className={inputClass}

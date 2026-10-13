@@ -1,12 +1,16 @@
 from datetime import date
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, StringConstraints
+
+
+MIN_PASSWORD_LENGTH = 6
 
 
 def check_password(password: str) -> str:
-    if len(password) < 8:
-        raise ValueError("Şifre en az 8 karakter olmalıdır")
+    """The only rule is the minimum length (plus the technical limit below)."""
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"Şifre en az {MIN_PASSWORD_LENGTH} karakter olmalıdır")
     # bcrypt only accepts up to 72 bytes.
     if len(password.encode()) > 72:
         raise ValueError("Şifre çok uzun")
@@ -21,7 +25,8 @@ def not_in_future(value: date | None) -> date | None:
 
 Name = Annotated[str, Field(min_length=1, max_length=255)]
 ConsentDate = Annotated[date | None, AfterValidator(not_in_future)]
-Password = Annotated[str, AfterValidator(check_password)]
+# Never trimmed, unlike the other text fields: the password is stored exactly as typed.
+Password = Annotated[str, StringConstraints(strip_whitespace=False), AfterValidator(check_password)]
 
 
 class UserRef(BaseModel):
