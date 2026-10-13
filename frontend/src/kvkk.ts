@@ -5,9 +5,9 @@
  * starting template, not legal advice: have it reviewed by a lawyer.
  */
 export const DATA_CONTROLLER = {
-  name: '[KURUM / KİŞİ ADI]',
-  address: '[ADRES]',
-  email: '[E-POSTA ADRESİ]',
+  name: 'Ekici Danışmanlık /  Gülce Ekici',
+  address: 'Kiraz/İzmir',
+  email: 'ekicig@mef.edu.tr',
   /** Where the servers are, e.g. "Türkiye". Decides what the notice says about transfers abroad. */
   hostingLocation: '[SUNUCU KONUMU]',
 }
