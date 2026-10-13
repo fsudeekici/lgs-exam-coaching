@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.services.scoring import calculate_net
+from app.services.scoring import calculate_net, exact_net, round_net
 
 
 @pytest.mark.parametrize(
@@ -18,3 +18,10 @@ from app.services.scoring import calculate_net
 )
 def test_calculate_net(correct, wrong, expected):
     assert calculate_net(correct, wrong) == Decimal(expected)
+
+
+def test_rounding_once_avoids_drift():
+    nets = [exact_net(5, 1)] * 6
+
+    assert round_net(nets[0]) == 4.67
+    assert round_net(sum(nets)) == 28.0

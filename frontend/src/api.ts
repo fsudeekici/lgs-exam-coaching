@@ -16,6 +16,9 @@ export interface Subject {
   id: number
   code: string
   name: string
+  /** Compact label for tables and charts, e.g. "Mat". */
+  short_name: string
+  session: 'sozel' | 'sayisal'
   question_count: number
   topics: Topic[]
 }
@@ -158,3 +161,36 @@ export const fetchParents = () => request<Parent[]>('/admin/parents')
 export const createParent = (parent: ParentInput) => request<Parent>('/admin/parents', json('POST', parent))
 export const updateParent = (id: number, changes: Partial<ParentInput & { is_active: boolean }>) =>
   request<Parent>(`/admin/parents/${id}`, json('PATCH', changes))
+
+export interface ExamPoint {
+  exam_id: number
+  name: string
+  exam_date: string
+  total_net: number
+  nets: { subject_id: number; net: number }[]
+}
+
+export interface NetChange {
+  last: number
+  /** null when there is no previous exam to compare with. */
+  previous: number | null
+  change: number | null
+}
+
+export interface StudentAnalytics {
+  student: Pick<Student, 'id' | 'full_name' | 'school' | 'class_name' | 'is_active'>
+  subjects: Omit<Subject, 'topics'>[]
+  /** Oldest exam first. */
+  exams: ExamPoint[]
+  comparison: {
+    last_exam_id: number
+    previous_exam_id: number | null
+    total: NetChange
+    subjects: (NetChange & { subject_id: number })[]
+  } | null
+  weak_topics: { topic_id: number; name: string; subject_id: number; count: number }[]
+  averages: { subject_id: number; student_average: number; class_average: number }[]
+}
+
+export const fetchStudentAnalytics = (studentId: number) =>
+  request<StudentAnalytics>(`/admin/students/${studentId}/analytics`)

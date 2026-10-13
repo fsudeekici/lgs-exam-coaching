@@ -10,3 +10,9 @@ export const formatDate = (isoDate: string) => isoDate.split('-').reverse().join
 /** Sorts people by name using Turkish alphabet order. */
 export const byName = (a: { full_name: string }, b: { full_name: string }) =>
   a.full_name.localeCompare(b.full_name, 'tr')
+
+/** A net difference with an explicit sign, e.g. "+1,33" or "−2,00". */
+export const formatChange = (change: number) => `${change > 0 ? '+' : change < 0 ? '−' : ''}${formatNet(Math.abs(change))}`
+
+/** Short axis label for an exam date: DD.MM */
+export const formatShortDate = (isoDate: string) => isoDate.split('-').reverse().slice(0, 2).join('.')

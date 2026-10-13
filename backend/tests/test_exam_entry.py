@@ -94,6 +94,18 @@ def test_save_results_computes_net(client, admin, exam_id, student, subjects):
     assert [r["subject_id"] for r in body["results"]] == [s["id"] for s in subjects]
 
 
+def test_total_net_is_not_a_sum_of_rounded_nets(client, admin, exam_id, student, subjects):
+    # 5 correct, 1 wrong in every subject: 6 x 4.67 would give 28.02, the real total is 30 - 6/3.
+    results = [
+        {"subject_id": s["id"], "correct": 5, "wrong": 1, "blank": s["question_count"] - 6} for s in subjects
+    ]
+
+    body = save(client, admin, exam_id, student.id, results).json()
+
+    assert [r["net"] for r in body["results"]] == [4.67] * 6
+    assert body["total_net"] == 28.0
+
+
 @pytest.mark.parametrize(("correct", "wrong", "blank"), [(15, 3, 1), (15, 3, 3), (21, 0, 0)])
 def test_save_results_rejects_wrong_question_total(client, admin, exam_id, student, subjects, correct, wrong, blank):
     results = full_results(subjects)

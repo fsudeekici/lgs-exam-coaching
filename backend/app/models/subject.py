@@ -10,6 +10,10 @@ class Subject(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(32), unique=True)
     name: Mapped[str] = mapped_column(String(100))
+    # Compact label for tables and charts, e.g. "Mat".
+    short_name: Mapped[str] = mapped_column(String(32))
+    # LGS session the subject belongs to: "sozel" or "sayisal".
+    session: Mapped[str] = mapped_column(String(16))
     question_count: Mapped[int]
     display_order: Mapped[int]
 

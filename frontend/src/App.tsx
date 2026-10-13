@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -9,6 +10,9 @@ import ParentDashboard from './pages/ParentDashboard'
 import StudentDashboard from './pages/StudentDashboard'
 import StudentsPage from './pages/StudentsPage'
 
+// Loaded on demand: it is the only page that needs the charting library.
+const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'))
+
 export default function App() {
   return (
     <AuthProvider>
@@ -19,6 +23,14 @@ export default function App() {
             <Route path="/admin" element={<ExamsPage />} />
             <Route path="/admin/exams/:examId" element={<ExamDetailPage />} />
             <Route path="/admin/students" element={<StudentsPage />} />
+            <Route
+              path="/admin/students/:studentId"
+              element={
+                <Suspense fallback={<p className="p-8 text-slate-500">Yükleniyor…</p>}>
+                  <StudentDetailPage />
+                </Suspense>
+              }
+            />
             <Route path="/admin/parents" element={<ParentsPage />} />
           </Route>
           <Route element={<ProtectedRoute role="student" />}>

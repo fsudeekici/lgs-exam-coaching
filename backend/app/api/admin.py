@@ -1,3 +1,6 @@
+from collections import defaultdict
+from fractions import Fraction
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
@@ -13,6 +16,7 @@ from app.schemas.exam import (
     StudentResultsOut,
     SubjectOut,
 )
+from app.services.scoring import exact_net, round_net
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_role(Role.admin))])
 
@@ -49,6 +53,7 @@ def load_student_results(db: DbSession, exam_id: int, student_id: int | None = N
         query = query.where(ExamResult.student_id == student_id)
 
     students: dict[int, StudentResultsOut] = {}
+    totals: dict[int, Fraction] = defaultdict(Fraction)
     for result, full_name in db.execute(query):
         entry = students.setdefault(
             result.student_id,
@@ -64,7 +69,8 @@ def load_student_results(db: DbSession, exam_id: int, student_id: int | None = N
                 mistake_topic_ids=[m.topic_id for m in result.topic_mistakes],
             )
         )
-        entry.total_net = round(entry.total_net + float(result.net), 2)
+        totals[result.student_id] += exact_net(result.correct, result.wrong)
+        entry.total_net = round_net(totals[result.student_id])
     return list(students.values())
 
 

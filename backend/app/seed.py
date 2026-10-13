@@ -1,11 +1,13 @@
 """Seed reference data. Safe to run repeatedly.
 
     python -m app.seed          # LGS subjects and topics + admin account from ADMIN_EMAIL / ADMIN_PASSWORD
-    python -m app.seed --demo   # also demo students and a parent (local development only)
+    python -m app.seed --demo   # also demo students, a parent and 4 exams with results (local development only)
 """
 
 import json
+import random
 import sys
+from datetime import date
 from pathlib import Path
 
 from sqlalchemy import select
@@ -14,7 +16,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import hash_password
 from app.database import SessionLocal
-from app.models import ExamTopicMistake, Role, Subject, Topic, User
+from app.models import Exam, ExamResult, ExamTopicMistake, Role, Subject, Topic, User
 
 # The only source for LGS subjects and topics, listed in booklet order.
 SEED_FILE = Path(__file__).resolve().parent.parent / "seed" / "lgs_topics_seed.json"
@@ -25,6 +27,13 @@ DEMO_STUDENTS = [
     ("student3@example.com", "Mert Kaya"),
 ]
 DEMO_PASSWORD = "demo1234"
+# (name, date, publisher)
+DEMO_EXAMS = [
+    ("Demo Deneme 1", date(2026, 9, 5), "Özdebir"),
+    ("Demo Deneme 2", date(2026, 9, 19), "Töder"),
+    ("Demo Deneme 3", date(2026, 10, 3), "Özdebir"),
+    ("Demo Deneme 4", date(2026, 10, 17), "Nartest"),
+]
 
 
 def seed_subjects(db: Session) -> None:
@@ -40,6 +49,8 @@ def seed_subjects(db: Session) -> None:
             subject = Subject(code=item["code"])
             db.add(subject)
         subject.name = item["name"]
+        subject.short_name = item["short_name"]
+        subject.session = item["session"]
         subject.question_count = item["question_count"]
         subject.display_order = order
 
@@ -64,6 +75,41 @@ def get_or_create_user(db: Session, email: str, full_name: str, password: str, r
     return user
 
 
+def seed_demo_exams(db: Session, students: list[User]) -> None:
+    """Create the demo exams with results for every given student. Exams that already exist are left alone.
+
+    Results are made up but repeatable: each student has their own level and improves a
+    little from exam to exam, so the analytics pages have something to show.
+    """
+    rng = random.Random(2026)
+    subjects = db.scalars(select(Subject).order_by(Subject.display_order)).all()
+    for exam_index, (name, exam_date, publisher) in enumerate(DEMO_EXAMS):
+        exists = db.scalar(select(Exam).where(Exam.name == name)) is not None
+        exam = Exam(name=name, exam_date=exam_date, publisher=publisher)
+        for student_index, student in enumerate(students):
+            for subject in subjects:
+                questions = subject.question_count
+                # Always drawn, even for an existing exam, so later exams get the same numbers either way.
+                level = 0.5 + 0.1 * student_index + 0.05 * exam_index + rng.uniform(-0.1, 0.1)
+                correct = max(0, min(questions, round(questions * level)))
+                wrong = rng.randint(0, min(questions - correct, questions // 4))
+                topics = rng.sample(subject.topics, min(wrong, 2, len(subject.topics)))
+                if not exists:
+                    db.add(
+                        ExamResult(
+                            exam=exam,
+                            student_id=student.id,
+                            subject_id=subject.id,
+                            correct=correct,
+                            wrong=wrong,
+                            blank=questions - correct - wrong,
+                            topic_mistakes=[ExamTopicMistake(topic_id=topic.id) for topic in topics],
+                        )
+                    )
+        if not exists:
+            print(f"Created demo exam: {name}")
+
+
 def main() -> None:
     with SessionLocal() as db:
         seed_subjects(db)
@@ -81,6 +127,7 @@ def main() -> None:
             parent = get_or_create_user(db, "parent@example.com", "Demo Veli", DEMO_PASSWORD, Role.parent)
             if students[0] not in parent.students:
                 parent.students.append(students[0])
+            seed_demo_exams(db, students)
 
         db.commit()
     print("Seed complete")

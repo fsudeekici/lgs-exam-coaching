@@ -41,6 +41,7 @@ class ExamResult(Base):
         Numeric(5, 2), Computed("round(correct - wrong / 3.0, 2)", persisted=True)
     )
 
+    exam: Mapped[Exam] = relationship()
     topic_mistakes: Mapped[list["ExamTopicMistake"]] = relationship(cascade="all, delete-orphan")
 
 
