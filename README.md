@@ -20,7 +20,7 @@ cd backend
 pip install -r requirements.txt
 cp .env.example .env          # then set JWT_SECRET and ADMIN_PASSWORD
 alembic upgrade head
-python -m app.seed --demo     # subjects, topics + admin; --demo adds students, a parent and 4 exams
+python -m app.seed --demo     # subjects, topics + admin; --demo adds sample people and data
 uvicorn app.main:app --reload
 ```
 
@@ -31,6 +31,9 @@ cd frontend
 npm install
 npm run dev
 ```
+
+`--demo` adds three students, a parent linked to the first one, four exams with results,
+30 days of question logs, topic progress and two coach notes. It never overwrites existing data.
 
 Demo logins created by `--demo` (local development only): `student@example.com`,
 `student2@example.com`, `student3@example.com` and `parent@example.com`, password `demo1234`. The admin login comes from `ADMIN_EMAIL` /
@@ -66,6 +69,14 @@ Students log in to a phone-friendly panel with three tabs:
 
 The admin sees a student's question logs (last 30 days) and topic progress at the bottom of
 the student detail page.
+
+## Parent panel and coach notes
+
+Parents log in to a short summary for each child linked to them: last exam, total net trend,
+most frequent wrong topics, and questions solved in the last 7 days.
+
+On the student detail page the admin writes coach notes and chooses per note whether the
+parent can see it. Parents see only the visible ones.
 
 ## Subjects and topics
 

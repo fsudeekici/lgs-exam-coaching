@@ -232,3 +232,35 @@ export const fetchStudentQuestionLogs = (studentId: number) =>
   request<QuestionLog[]>(`/admin/students/${studentId}/question-logs`)
 export const fetchStudentTopicProgress = (studentId: number) =>
   request<TopicProgress[]>(`/admin/students/${studentId}/topic-progress`)
+
+export interface CoachNote {
+  id: number
+  body: string
+  visible_to_parent: boolean
+  created_at: string
+}
+
+export const fetchStudentNotes = (studentId: number) => request<CoachNote[]>(`/admin/students/${studentId}/notes`)
+export const addStudentNote = (studentId: number, note: { body: string; visible_to_parent: boolean }) =>
+  request<CoachNote>(`/admin/students/${studentId}/notes`, json('POST', note))
+export const updateNote = (noteId: number, changes: Partial<{ body: string; visible_to_parent: boolean }>) =>
+  request<CoachNote>(`/admin/notes/${noteId}`, json('PATCH', changes))
+export const deleteNote = (noteId: number) => request<void>(`/admin/notes/${noteId}`, { method: 'DELETE' })
+
+export interface DayQuestions {
+  day: string
+  solved: number
+  correct: number
+  wrong: number
+}
+
+/** What a parent sees for one child. */
+export interface ChildSummary {
+  analytics: StudentAnalytics
+  /** Questions over the last 7 days; `days` has all 7, oldest first. */
+  week: { solved: number; correct: number; wrong: number; active_days: number; days: DayQuestions[] }
+  /** Coach notes marked visible to parents, newest first. */
+  notes: Pick<CoachNote, 'id' | 'body' | 'created_at'>[]
+}
+
+export const fetchMyChildren = () => request<ChildSummary[]>('/parent/children')

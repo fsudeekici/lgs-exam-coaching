@@ -10,8 +10,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { ExamPoint } from '../api'
-import { formatDate, formatNet, formatShortDate } from '../format'
+import type { DayQuestions, ExamPoint } from '../api'
+import { formatDate, formatNet, formatShortDate, formatWeekday } from '../format'
 
 // The student's own data is always blue; anything it is compared against is gray.
 const STUDENT = '#2a78d6'
@@ -129,6 +129,27 @@ export function AverageComparisonChart({ rows, height }: { rows: AverageRow[]; h
           maxBarSize={24}
           isAnimationActive={false}
         />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+/** Questions solved per day over one week. */
+export function WeekQuestionsChart({ days, height }: { days: DayQuestions[]; height: number }) {
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart data={days} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+        <CartesianGrid stroke={GRID} vertical={false} />
+        <XAxis dataKey="day" tickFormatter={formatWeekday} tick={TICK} tickLine={false} axisLine={{ stroke: AXIS }} interval={0} />
+        <YAxis allowDecimals={false} tick={TICK} tickLine={false} axisLine={false} width={32} />
+        <Tooltip
+          contentStyle={tooltipProps.contentStyle}
+          labelStyle={tooltipProps.labelStyle}
+          itemStyle={tooltipProps.itemStyle}
+          cursor={{ fill: '#f1f5f9' }}
+          labelFormatter={(day) => formatDate(String(day))}
+        />
+        <Bar name="Çözülen soru" dataKey="solved" fill={STUDENT} radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={false} />
       </BarChart>
     </ResponsiveContainer>
   )
