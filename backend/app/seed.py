@@ -1,10 +1,12 @@
 """Seed reference data. Safe to run repeatedly.
 
-    python -m app.seed          # LGS subjects + admin account from ADMIN_EMAIL / ADMIN_PASSWORD
+    python -m app.seed          # LGS subjects and topics + admin account from ADMIN_EMAIL / ADMIN_PASSWORD
     python -m app.seed --demo   # also demo students and a parent (local development only)
 """
 
+import json
 import sys
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -12,108 +14,10 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import hash_password
 from app.database import SessionLocal
-from app.models import ParentStudent, Role, Subject, Topic, User
+from app.models import ExamTopicMistake, Role, Subject, Topic, User
 
-# (code, name, question_count, topics) in LGS booklet order. Topics follow the 8th grade curriculum.
-LGS_SUBJECTS = [
-    (
-        "turkish",
-        "Türkçe",
-        20,
-        [
-            "Sözcükte Anlam",
-            "Cümlede Anlam",
-            "Paragraf",
-            "Deyimler ve Atasözleri",
-            "Söz Sanatları",
-            "Fiilimsiler",
-            "Cümlenin Ögeleri",
-            "Fiilde Çatı",
-            "Cümle Türleri",
-            "Yazım Kuralları",
-            "Noktalama İşaretleri",
-            "Anlatım Bozuklukları",
-            "Metin Türleri",
-            "Sözel Mantık ve Görsel Okuma",
-        ],
-    ),
-    (
-        "history",
-        "İnkılap Tarihi",
-        10,
-        [
-            "Bir Kahraman Doğuyor",
-            "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar",
-            "Millî Bir Destan: Ya İstiklal Ya Ölüm!",
-            "Atatürkçülük ve Çağdaşlaşan Türkiye",
-            "Demokratikleşme Çabaları",
-            "Atatürk Dönemi Türk Dış Politikası",
-            "Atatürk'ün Ölümü ve Sonrası",
-        ],
-    ),
-    (
-        "religion",
-        "Din Kültürü",
-        10,
-        [
-            "Kader İnancı",
-            "Zekât ve Sadaka",
-            "Din ve Hayat",
-            "Hz. Muhammed'in Örnekliği",
-            "Kur'an-ı Kerim ve Özellikleri",
-        ],
-    ),
-    (
-        "english",
-        "İngilizce",
-        10,
-        [
-            "Friendship",
-            "Teen Life",
-            "In the Kitchen",
-            "On the Phone",
-            "The Internet",
-            "Adventures",
-            "Tourism",
-            "Chores",
-            "Science",
-            "Natural Forces",
-        ],
-    ),
-    (
-        "math",
-        "Matematik",
-        20,
-        [
-            "Çarpanlar ve Katlar",
-            "Üslü İfadeler",
-            "Kareköklü İfadeler",
-            "Veri Analizi",
-            "Basit Olayların Olma Olasılığı",
-            "Cebirsel İfadeler ve Özdeşlikler",
-            "Doğrusal Denklemler",
-            "Eşitsizlikler",
-            "Üçgenler",
-            "Eşlik ve Benzerlik",
-            "Dönüşüm Geometrisi",
-            "Geometrik Cisimler",
-        ],
-    ),
-    (
-        "science",
-        "Fen Bilimleri",
-        20,
-        [
-            "Mevsimler ve İklim",
-            "DNA ve Genetik Kod",
-            "Basınç",
-            "Madde ve Endüstri",
-            "Basit Makineler",
-            "Enerji Dönüşümleri ve Çevre Bilimi",
-            "Elektrik Yükleri ve Elektrik Enerjisi",
-        ],
-    ),
-]
+# The only source for LGS subjects and topics, listed in booklet order.
+SEED_FILE = Path(__file__).resolve().parent.parent / "seed" / "lgs_topics_seed.json"
 
 DEMO_STUDENTS = [
     ("student@example.com", "Demo Öğrenci"),
@@ -124,19 +28,30 @@ DEMO_PASSWORD = "demo1234"
 
 
 def seed_subjects(db: Session) -> None:
-    """Create or update subjects and add any missing topics. Never deletes topics."""
+    """Make subjects and topics match the seed file.
+
+    Topics missing from the file are deleted, unless a recorded exam mistake still points at them.
+    """
+    data = json.loads(SEED_FILE.read_text(encoding="utf-8"))
     existing = {s.code: s for s in db.scalars(select(Subject))}
-    for order, (code, name, question_count, topics) in enumerate(LGS_SUBJECTS, start=1):
-        subject = existing.get(code)
+    for order, item in enumerate(data["subjects"], start=1):
+        subject = existing.get(item["code"])
         if subject is None:
-            subject = Subject(code=code)
+            subject = Subject(code=item["code"])
             db.add(subject)
-        subject.name = name
-        subject.question_count = question_count
+        subject.name = item["name"]
+        subject.question_count = item["question_count"]
         subject.display_order = order
 
         current = {t.name for t in subject.topics}
-        subject.topics.extend(Topic(name=topic) for topic in topics if topic not in current)
+        subject.topics.extend(Topic(name=name) for name in item["topics"] if name not in current)
+
+        for topic in [t for t in subject.topics if t.name not in item["topics"]]:
+            in_use = db.scalar(select(ExamTopicMistake).where(ExamTopicMistake.topic_id == topic.id).limit(1))
+            if in_use is None:
+                subject.topics.remove(topic)
+            else:
+                print(f"Kept topic not in seed file (used by exam results): {subject.name} / {topic.name}")
 
 
 def get_or_create_user(db: Session, email: str, full_name: str, password: str, role: Role) -> User:
@@ -164,8 +79,8 @@ def main() -> None:
                 for email, full_name in DEMO_STUDENTS
             ]
             parent = get_or_create_user(db, "parent@example.com", "Demo Veli", DEMO_PASSWORD, Role.parent)
-            if db.get(ParentStudent, (parent.id, students[0].id)) is None:
-                db.add(ParentStudent(parent_id=parent.id, student_id=students[0].id))
+            if students[0] not in parent.students:
+                parent.students.append(students[0])
 
         db.commit()
     print("Seed complete")

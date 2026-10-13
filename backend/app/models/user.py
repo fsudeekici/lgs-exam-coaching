@@ -2,7 +2,7 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -23,6 +23,25 @@ class User(Base):
     role: Mapped[Role] = mapped_column(Enum(Role, name="user_role"))
     is_active: Mapped[bool] = mapped_column(default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Only used for students.
+    school: Mapped[str | None] = mapped_column(String(255))
+    class_name: Mapped[str | None] = mapped_column(String(50))
+
+    # Parent -> their students, and student -> their parents, through parent_student.
+    students: Mapped[list["User"]] = relationship(
+        secondary="parent_student",
+        primaryjoin="User.id == ParentStudent.parent_id",
+        secondaryjoin="User.id == ParentStudent.student_id",
+        back_populates="parents",
+        order_by="User.full_name",
+    )
+    parents: Mapped[list["User"]] = relationship(
+        secondary="parent_student",
+        primaryjoin="User.id == ParentStudent.student_id",
+        secondaryjoin="User.id == ParentStudent.parent_id",
+        back_populates="students",
+        order_by="User.full_name",
+    )
 
 
 class ParentStudent(Base):

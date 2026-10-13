@@ -43,6 +43,18 @@ exam page: correct, wrong and blank for all six subjects in one form, plus optio
 topics per subject. Correct + wrong + blank must equal the subject's question count; a blank
 count left empty is filled in automatically.
 
+## Students and parents
+
+Under "Öğrenciler" the admin adds and edits students (name, email, password, school, class) and
+deactivates them. A deactivated student cannot log in and is no longer offered for result entry,
+but keeps their exam results. Under "Veliler" the admin adds parents and links them to students.
+
+## Subjects and topics
+
+`backend/seed/lgs_topics_seed.json` is the only source for subjects and topics. After editing it,
+run `python -m app.seed`. Topics removed from the file are deleted from the database, except
+those already used in recorded exam mistakes, which are kept and reported.
+
 ## Scoring
 
 Net = correct − wrong / 3. `exam_results.net` is a generated column in PostgreSQL;
@@ -53,3 +65,6 @@ Net = correct − wrong / 3. `exam_results.net` is a generated column in Postgre
 ```sh
 cd backend && pytest
 ```
+
+The API tests need PostgreSQL running. They use a separate database, named after the one in
+`DATABASE_URL` with `_test` appended (created automatically), or `TEST_DATABASE_URL` if set.

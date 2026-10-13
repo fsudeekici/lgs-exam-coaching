@@ -20,9 +20,39 @@ export interface Subject {
   topics: Topic[]
 }
 
-export interface Student {
+export interface UserRef {
   id: number
   full_name: string
+}
+
+export interface Student extends UserRef {
+  email: string
+  school: string | null
+  class_name: string | null
+  is_active: boolean
+  parents: UserRef[]
+}
+
+export interface Parent extends UserRef {
+  email: string
+  is_active: boolean
+  students: UserRef[]
+}
+
+/** Create needs every field; on update, fields left out stay unchanged. */
+export interface StudentInput {
+  full_name: string
+  email: string
+  password: string
+  school: string
+  class_name: string
+}
+
+export interface ParentInput {
+  full_name: string
+  email: string
+  password: string
+  student_ids: number[]
 }
 
 export interface Exam {
@@ -119,3 +149,12 @@ export const saveStudentResults = (examId: number, studentId: number, results: R
 
 export const deleteStudentResults = (examId: number, studentId: number) =>
   request<void>(`/admin/exams/${examId}/students/${studentId}/results`, { method: 'DELETE' })
+
+export const createStudent = (student: StudentInput) => request<Student>('/admin/students', json('POST', student))
+export const updateStudent = (id: number, changes: Partial<StudentInput & { is_active: boolean }>) =>
+  request<Student>(`/admin/students/${id}`, json('PATCH', changes))
+
+export const fetchParents = () => request<Parent[]>('/admin/parents')
+export const createParent = (parent: ParentInput) => request<Parent>('/admin/parents', json('POST', parent))
+export const updateParent = (id: number, changes: Partial<ParentInput & { is_active: boolean }>) =>
+  request<Parent>(`/admin/parents/${id}`, json('PATCH', changes))

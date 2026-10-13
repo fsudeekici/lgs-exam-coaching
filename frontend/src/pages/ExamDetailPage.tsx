@@ -16,7 +16,7 @@ import {
 import DashboardLayout from '../components/DashboardLayout'
 import ResultEntryForm from '../components/ResultEntryForm'
 import ResultsTable from '../components/ResultsTable'
-import { formatDate } from '../format'
+import { byName, formatDate } from '../format'
 
 export default function ExamDetailPage() {
   const examId = Number(useParams().examId)
@@ -35,8 +35,10 @@ export default function ExamDetailPage() {
       .then(([examData, subjectData, studentData]) => {
         setExam(examData)
         setSubjects(subjectData)
-        setStudents(studentData)
-        setStudentId(nextStudentWithoutResults(studentData, examData.students) ?? studentData[0]?.id ?? null)
+        // Deactivated students are not offered for new entries; their saved results still show below.
+        const active = studentData.filter((s) => s.is_active)
+        setStudents(active)
+        setStudentId(nextStudentWithoutResults(active, examData.students) ?? active[0]?.id ?? null)
       })
       .catch((err) => setError(errorMessage(err)))
   }, [examId])
@@ -58,9 +60,7 @@ export default function ExamDetailPage() {
     setMessage(null)
     try {
       const saved = await saveStudentResults(examId, studentId, results)
-      const updated = [...exam.students.filter((s) => s.student_id !== saved.student_id), saved].sort((a, b) =>
-        a.full_name.localeCompare(b.full_name, 'tr'),
-      )
+      const updated = [...exam.students.filter((s) => s.student_id !== saved.student_id), saved].sort(byName)
       setExam({ ...exam, students: updated })
       setMessage(`${saved.full_name} kaydedildi.`)
       // Move on to the next student that still needs results.
@@ -106,7 +106,12 @@ export default function ExamDetailPage() {
       <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-lg font-semibold text-slate-900">Sonuç girişi</h2>
         {students.length === 0 ? (
-          <p className="mt-2 text-slate-500">Kayıtlı öğrenci yok.</p>
+          <p className="mt-2 text-slate-500">
+            Kayıtlı öğrenci yok.{' '}
+            <Link to="/admin/students" className="text-indigo-700 hover:underline">
+              Öğrenci ekleyin
+            </Link>
+          </p>
         ) : (
           <>
             <label className="mt-3 block text-sm font-medium text-slate-700">

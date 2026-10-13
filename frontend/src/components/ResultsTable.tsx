@@ -20,7 +20,7 @@ export default function ResultsTable({ subjects, students, onEdit, onDelete }: P
               Öğrenci
             </th>
             {subjects.map((subject) => (
-              <th key={subject.id} colSpan={4} className="border-l border-slate-200 px-2 py-2 text-center font-medium">
+              <th key={subject.id} colSpan={4} className="border-l border-slate-200 px-2 py-2 text-center font-medium whitespace-normal">
                 {subject.name}
               </th>
             ))}
