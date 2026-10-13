@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, Computed, DateTime, ForeignKey, Numeric, String, UniqueConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -15,6 +15,7 @@ class Exam(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255))
     exam_date: Mapped[date]
+    publisher: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -39,3 +40,16 @@ class ExamResult(Base):
     net: Mapped[Decimal] = mapped_column(
         Numeric(5, 2), Computed("round(correct - wrong / 3.0, 2)", persisted=True)
     )
+
+    topic_mistakes: Mapped[list["ExamTopicMistake"]] = relationship(cascade="all, delete-orphan")
+
+
+class ExamTopicMistake(Base):
+    """A topic the student got wrong in one subject of one exam."""
+
+    __tablename__ = "exam_topic_mistakes"
+
+    exam_result_id: Mapped[int] = mapped_column(
+        ForeignKey("exam_results.id", ondelete="CASCADE"), primary_key=True
+    )
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), primary_key=True, index=True)

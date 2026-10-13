@@ -1,5 +1,5 @@
 import DashboardLayout from '../components/DashboardLayout'
 
 export default function ParentDashboard() {
-  return <DashboardLayout title="Parent Dashboard" />
+  return <DashboardLayout title="Veli Paneli" />
 }

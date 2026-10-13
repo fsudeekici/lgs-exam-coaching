@@ -19,7 +19,7 @@ def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], db: DbSession) 
     if user is None or not user.is_active or not verify_password(form.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="E-posta veya şifre hatalı",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return Token(access_token=create_access_token(user.id, user.role.value))

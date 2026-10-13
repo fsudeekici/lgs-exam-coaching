@@ -20,7 +20,7 @@ cd backend
 pip install -r requirements.txt
 cp .env.example .env          # then set JWT_SECRET and ADMIN_PASSWORD
 alembic upgrade head
-python -m app.seed --demo     # subjects + admin; --demo adds a student and a parent
+python -m app.seed --demo     # subjects, topics + admin; --demo adds students and a parent
 uvicorn app.main:app --reload
 ```
 
@@ -32,9 +32,16 @@ npm install
 npm run dev
 ```
 
-Demo logins created by `--demo` (local development only): `student@example.com` and
-`parent@example.com`, password `demo1234`. The admin login comes from `ADMIN_EMAIL` /
+Demo logins created by `--demo` (local development only): `student@example.com`,
+`student2@example.com`, `student3@example.com` and `parent@example.com`, password `demo1234`. The admin login comes from `ADMIN_EMAIL` /
 `ADMIN_PASSWORD` in `.env`.
+
+## Entering exam results
+
+The admin creates an exam (name, date, publisher), then enters each student's results on the
+exam page: correct, wrong and blank for all six subjects in one form, plus optional wrong
+topics per subject. Correct + wrong + blank must equal the subject's question count; a blank
+count left empty is filled in automatically.
 
 ## Scoring
 
