@@ -1,7 +1,7 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import admin, admin_analytics, admin_users, auth, dashboards
+from app.api import admin, admin_analytics, admin_study, admin_users, auth, dashboards, student
 from app.core.config import settings
 
 app = FastAPI(title="LGS Exam Coaching")
@@ -19,6 +19,8 @@ api.include_router(dashboards.router)
 api.include_router(admin.router)
 api.include_router(admin_users.router)
 api.include_router(admin_analytics.router)
+api.include_router(admin_study.router)
+api.include_router(student.router)
 app.include_router(api)
 
 

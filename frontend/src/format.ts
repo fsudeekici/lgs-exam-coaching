@@ -16,3 +16,12 @@ export const formatChange = (change: number) => `${change > 0 ? '+' : change < 0
 
 /** Short axis label for an exam date: DD.MM */
 export const formatShortDate = (isoDate: string) => isoDate.split('-').reverse().slice(0, 2).join('.')
+
+/** A Date as YYYY-MM-DD in local time. */
+export const toIsoDate = (date: Date) => date.toLocaleDateString('sv-SE')
+
+export const daysAgo = (days: number) => {
+  const date = new Date()
+  date.setDate(date.getDate() - days)
+  return toIsoDate(date)
+}

@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 
 from app.api.admin_users import get_user_or_404
 from app.api.deps import DbSession, require_role
-from app.models import Exam, ExamResult, ExamTopicMistake, Role, Subject, Topic
+from app.models import Exam, ExamResult, ExamTopicMistake, Role, Subject, Topic, User
 from app.schemas.analytics import (
     Comparison,
     ExamPoint,
@@ -48,10 +48,8 @@ def compare_last_two(exams: list[ExamPoint], nets: dict[int, dict[int, Fraction]
     )
 
 
-@router.get("/students/{student_id}/analytics", response_model=StudentAnalytics)
-def student_analytics(student_id: int, db: DbSession):
-    """Everything the student detail page shows, in one response."""
-    student = get_user_or_404(db, student_id, Role.student)
+def build_student_analytics(db: DbSession, student: User) -> StudentAnalytics:
+    """Everything the exam analytics page shows for one student."""
     subjects = db.scalars(select(Subject).order_by(Subject.display_order)).all()
 
     # Net trend: the student's exams, oldest first, subjects in booklet order.
@@ -59,7 +57,7 @@ def student_analytics(student_id: int, db: DbSession):
         select(ExamResult, Exam)
         .join(Exam, Exam.id == ExamResult.exam_id)
         .join(Subject, Subject.id == ExamResult.subject_id)
-        .where(ExamResult.student_id == student_id)
+        .where(ExamResult.student_id == student.id)
         .order_by(Exam.exam_date, Exam.id, Subject.display_order)
     )
     points: dict[int, ExamPoint] = {}
@@ -77,14 +75,14 @@ def student_analytics(student_id: int, db: DbSession):
         select(Topic.id, Topic.name, Topic.subject_id, func.count().label("count"))
         .join(ExamTopicMistake, ExamTopicMistake.topic_id == Topic.id)
         .join(ExamResult, ExamResult.id == ExamTopicMistake.exam_result_id)
-        .where(ExamResult.student_id == student_id)
+        .where(ExamResult.student_id == student.id)
         .group_by(Topic.id)
         .order_by(func.count().desc(), Topic.id)
         .limit(WEAK_TOPIC_LIMIT)
     )
 
     # Student vs everyone, over the exams this student took so both sides cover the same exams.
-    student_average = func.avg(ExamResult.net).filter(ExamResult.student_id == student_id)
+    student_average = func.avg(ExamResult.net).filter(ExamResult.student_id == student.id)
     averages = db.execute(
         select(ExamResult.subject_id, student_average, func.avg(ExamResult.net))
         .join(Subject, Subject.id == ExamResult.subject_id)
@@ -111,3 +109,8 @@ def student_analytics(student_id: int, db: DbSession):
             for subject_id, student_avg, class_avg in averages
         ],
     )
+
+
+@router.get("/students/{student_id}/analytics", response_model=StudentAnalytics)
+def student_analytics(student_id: int, db: DbSession):
+    return build_student_analytics(db, get_user_or_404(db, student_id, Role.student))

@@ -194,3 +194,41 @@ export interface StudentAnalytics {
 
 export const fetchStudentAnalytics = (studentId: number) =>
   request<StudentAnalytics>(`/admin/students/${studentId}/analytics`)
+
+export type TopicStatus = 'not_started' | 'studying' | 'done' | 'needs_review'
+
+export interface QuestionLogInput {
+  log_date: string
+  subject_id: number
+  /** null for mixed practice that is not about one topic. */
+  topic_id: number | null
+  solved: number
+  correct: number
+  wrong: number
+}
+
+export interface QuestionLog extends QuestionLogInput {
+  id: number
+}
+
+/** Only topics the student has marked are listed; the rest are not started. */
+export interface TopicProgress {
+  topic_id: number
+  status: TopicStatus
+}
+
+// Student panel: the logged-in student's own data.
+export const fetchMySubjects = () => request<Subject[]>('/student/subjects')
+export const fetchMyQuestionLogs = () => request<QuestionLog[]>('/student/question-logs')
+export const addQuestionLog = (log: QuestionLogInput) => request<QuestionLog>('/student/question-logs', json('POST', log))
+export const deleteQuestionLog = (id: number) => request<void>(`/student/question-logs/${id}`, { method: 'DELETE' })
+export const fetchMyTopicProgress = () => request<TopicProgress[]>('/student/topic-progress')
+export const setTopicStatus = (topicId: number, status: TopicStatus) =>
+  request<TopicProgress>(`/student/topic-progress/${topicId}`, json('PUT', { status }))
+export const fetchMyAnalytics = () => request<StudentAnalytics>('/student/analytics')
+
+// Admin's read-only view of the same data.
+export const fetchStudentQuestionLogs = (studentId: number) =>
+  request<QuestionLog[]>(`/admin/students/${studentId}/question-logs`)
+export const fetchStudentTopicProgress = (studentId: number) =>
+  request<TopicProgress[]>(`/admin/students/${studentId}/topic-progress`)

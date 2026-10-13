@@ -9,10 +9,28 @@ const ADMIN_NAV = [
   { to: '/admin/parents', label: 'Veliler' },
 ]
 
+const STUDENT_NAV = [
+  { to: '/student', label: 'Soru takibi' },
+  { to: '/student/topics', label: 'Konular' },
+  { to: '/student/analytics', label: 'Denemeler' },
+]
+
+const NAV: Record<Role, { to: string; label: string }[]> = { admin: ADMIN_NAV, student: STUDENT_NAV, parent: [] }
+
 const ROLE_LABELS: Record<Role, string> = { admin: 'Yönetici', student: 'Öğrenci', parent: 'Veli' }
 
-export default function DashboardLayout({ title, children }: { title: ReactNode; children?: ReactNode }) {
+interface Props {
+  title: ReactNode
+  children?: ReactNode
+  /** Phone-width column, for pages that are mostly a form or a list. */
+  narrow?: boolean
+}
+
+export default function DashboardLayout({ title, children, narrow }: Props) {
   const { user, logout } = useAuth()
+  const nav = user ? NAV[user.role] : []
+  // Students mostly use a phone: their navigation is a bar at the bottom of the screen there.
+  const bottomNav = user?.role === 'student'
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -22,13 +40,13 @@ export default function DashboardLayout({ title, children }: { title: ReactNode;
             <Link to="/" className="font-semibold text-slate-900">
               LGS Koçluk
             </Link>
-            {user?.role === 'admin' && (
-              <nav className="flex gap-1 text-sm">
-                {ADMIN_NAV.map((item) => (
+            {nav.length > 0 && (
+              <nav className={`gap-1 text-sm ${bottomNav ? 'hidden sm:flex' : 'flex'}`}>
+                {nav.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    end={item.to === '/admin'}
+                    end={item.to === '/admin' || item.to === '/student'}
                     className={({ isActive }) =>
                       `rounded-md px-3 py-1.5 ${isActive ? 'bg-indigo-50 font-medium text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`
                     }
@@ -52,7 +70,7 @@ export default function DashboardLayout({ title, children }: { title: ReactNode;
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className={`mx-auto px-4 py-6 sm:py-8 ${narrow ? 'max-w-xl' : 'max-w-7xl'} ${bottomNav ? 'pb-24 sm:pb-8' : ''}`}>
         <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
         <div className="mt-6">
           {children ?? (
@@ -62,6 +80,24 @@ export default function DashboardLayout({ title, children }: { title: ReactNode;
           )}
         </div>
       </main>
+      {bottomNav && (
+        <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden">
+          {nav.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/student'}
+              className={({ isActive }) =>
+                `flex min-h-14 flex-1 items-center justify-center border-t-2 px-1 text-center text-sm ${
+                  isActive ? 'border-indigo-600 font-semibold text-indigo-700' : 'border-transparent text-slate-600'
+                }`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+      )}
     </div>
   )
 }
