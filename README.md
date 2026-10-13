@@ -55,6 +55,18 @@ Clicking a student's name opens their detail page: the last exam against the one
 net trend over exams (total and per subject), most frequent wrong topics, and the student's
 average per subject next to the average of all students who took the same exams.
 
+## Student panel
+
+Students log in to a phone-friendly panel with three tabs:
+
+- **Soru takibi**: daily question log (date, subject, topic, solved, correct, wrong). The topic
+  is optional, and "solved" left empty counts as correct + wrong.
+- **Konular**: mark each topic as not started, studying, done or needs review.
+- **Denemeler**: their own exam analytics, the same view the admin has, read only.
+
+The admin sees a student's question logs (last 30 days) and topic progress at the bottom of
+the student detail page.
+
 ## Subjects and topics
 
 `backend/seed/lgs_topics_seed.json` is the only source for subjects (including `short_name` and `session`) and topics. After editing it,

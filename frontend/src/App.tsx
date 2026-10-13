@@ -7,11 +7,15 @@ import ExamsPage from './pages/ExamsPage'
 import LoginPage from './pages/LoginPage'
 import ParentsPage from './pages/ParentsPage'
 import ParentDashboard from './pages/ParentDashboard'
-import StudentDashboard from './pages/StudentDashboard'
+import StudentLogPage from './pages/StudentLogPage'
+import StudentTopicsPage from './pages/StudentTopicsPage'
 import StudentsPage from './pages/StudentsPage'
 
-// Loaded on demand: it is the only page that needs the charting library.
+// Loaded on demand: these are the only pages that need the charting library.
 const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'))
+const StudentAnalyticsPage = lazy(() => import('./pages/StudentAnalyticsPage'))
+
+const loading = <p className="p-8 text-slate-500">Yükleniyor…</p>
 
 export default function App() {
   return (
@@ -26,7 +30,7 @@ export default function App() {
             <Route
               path="/admin/students/:studentId"
               element={
-                <Suspense fallback={<p className="p-8 text-slate-500">Yükleniyor…</p>}>
+                <Suspense fallback={loading}>
                   <StudentDetailPage />
                 </Suspense>
               }
@@ -34,7 +38,16 @@ export default function App() {
             <Route path="/admin/parents" element={<ParentsPage />} />
           </Route>
           <Route element={<ProtectedRoute role="student" />}>
-            <Route path="/student" element={<StudentDashboard />} />
+            <Route path="/student" element={<StudentLogPage />} />
+            <Route path="/student/topics" element={<StudentTopicsPage />} />
+            <Route
+              path="/student/analytics"
+              element={
+                <Suspense fallback={loading}>
+                  <StudentAnalyticsPage />
+                </Suspense>
+              }
+            />
           </Route>
           <Route element={<ProtectedRoute role="parent" />}>
             <Route path="/parent" element={<ParentDashboard />} />
