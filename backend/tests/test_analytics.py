@@ -157,7 +157,12 @@ def test_comparison_does_not_accumulate_rounding(client, admin, student, subject
     assert comparison["total"] == {"last": 26.0, "previous": 28.0, "change": -2.0}
 
 
-def test_weak_topics_are_counted_across_exams(client, admin, student, subjects, enter):
+def weak_topic_counts(client, admin, student):
+    """Weak topics as (topic id, count) pairs."""
+    return [(t["topic_id"], t["count"]) for t in analytics(client, admin, student.id).json()["weak_topics"]]
+
+
+def test_weak_topics_are_those_missed_in_at_least_2_of_the_last_3_exams(client, admin, student, subjects, enter):
     other = make_user(Role.student, "ali@test.dev", "Ali Can")
     turkce, mat = subjects[0], subjects[4]
     exam_1 = enter(student, "2026-09-01", [10, 5, 5, 5, 10, 10], wrong_topics={0: 2, 4: 1})
@@ -168,17 +173,38 @@ def test_weak_topics_are_counted_across_exams(client, admin, student, subjects, 
 
     weak_topics = analytics(client, admin, student.id).json()["weak_topics"]
 
+    # The second Turkish topic was missed only once, so it is not listed.
     assert weak_topics == [
         {"topic_id": turkce["topics"][0]["id"], "name": turkce["topics"][0]["name"], "subject_id": turkce["id"], "count": 3},
         {"topic_id": mat["topics"][0]["id"], "name": mat["topics"][0]["name"], "subject_id": mat["id"], "count": 2},
-        {"topic_id": turkce["topics"][1]["id"], "name": turkce["topics"][1]["name"], "subject_id": turkce["id"], "count": 1},
     ]
+    assert weak_topic_counts(client, admin, other) == []
 
 
-def test_weak_topics_are_limited_to_ten(client, admin, student, enter):
+def test_weak_topics_ignore_exams_older_than_the_last_3(client, admin, student, subjects, enter):
+    turkce, mat = subjects[0], subjects[4]
+    # Entered out of date order: the two oldest exams fall outside the last 3.
+    enter(student, "2026-11-01", [10, 5, 5, 5, 10, 10], wrong_topics={4: 1})
+    enter(student, "2026-07-01", [10, 5, 5, 5, 10, 10], wrong_topics={0: 1})
+    enter(student, "2026-08-01", [10, 5, 5, 5, 10, 10], wrong_topics={0: 1})
+    enter(student, "2026-09-01", [10, 5, 5, 5, 10, 10], wrong_topics={0: 1, 4: 1})
+    enter(student, "2026-10-01", [10, 5, 5, 5, 10, 10])
+
+    # Turkish: missed 3 times overall but only once in the last 3 exams.
+    assert weak_topic_counts(client, admin, student) == [(mat["topics"][0]["id"], 2)]
+
+
+def test_a_topic_missed_once_is_not_weak(client, admin, student, enter):
     enter(student, "2026-09-01", [10, 5, 5, 5, 10, 10], wrong_topics={0: 13})
 
-    assert len(analytics(client, admin, student.id).json()["weak_topics"]) == 10
+    assert weak_topic_counts(client, admin, student) == []
+
+
+def test_all_weak_topics_are_listed(client, admin, student, enter):
+    enter(student, "2026-09-01", [10, 5, 5, 5, 10, 10], wrong_topics={0: 13})
+    enter(student, "2026-10-01", [10, 5, 5, 5, 10, 10], wrong_topics={0: 13})
+
+    assert len(weak_topic_counts(client, admin, student)) == 13
 
 
 def test_averages_compare_student_with_everyone_on_the_same_exams(client, admin, student, subjects, enter):

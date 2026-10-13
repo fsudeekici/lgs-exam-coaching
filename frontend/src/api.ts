@@ -216,6 +216,7 @@ export interface StudentAnalytics {
     total: NetChange
     subjects: (NetChange & { subject_id: number })[]
   } | null
+  /** Topics marked wrong in at least 2 of the last 3 exams; `count` is how many of them. Most missed first. */
   weak_topics: { topic_id: number; name: string; subject_id: number; count: number }[]
   averages: { subject_id: number; student_average: number; class_average: number }[]
 }
@@ -282,13 +283,66 @@ export interface DayQuestions {
   wrong: number
 }
 
+/** Questions over a period; `days` has every day of it, oldest first. */
+export interface QuestionsSummary {
+  solved: number
+  correct: number
+  wrong: number
+  /** Days with at least one entry. */
+  active_days: number
+  days: DayQuestions[]
+}
+
 /** What a parent sees for one child. */
 export interface ChildSummary {
   analytics: StudentAnalytics
-  /** Questions over the last 7 days; `days` has all 7, oldest first. */
-  week: { solved: number; correct: number; wrong: number; active_days: number; days: DayQuestions[] }
+  /** The last 7 days. */
+  week: QuestionsSummary
   /** Coach notes marked visible to parents, newest first. */
   notes: Pick<CoachNote, 'id' | 'body' | 'created_at'>[]
 }
 
 export const fetchMyChildren = () => request<ChildSummary[]>('/parent/children')
+
+/** One active student on the admin home page. */
+export interface OverviewRow {
+  student_id: number
+  full_name: string
+  class_name: string | null
+  /** `change` is against the previous exam; null when this is the first. */
+  last_exam: { exam_id: number; name: string; exam_date: string; total_net: number; change: number | null } | null
+  /** Questions solved in the last 7 days. */
+  week_solved: number
+  /** Topics marked wrong in at least 2 of the student's last 3 exams. */
+  weak_topic_count: number
+  last_log_date: string | null
+  /** No question log in the last 3 days. */
+  no_recent_log: boolean
+}
+
+export const fetchOverview = () => request<OverviewRow[]>('/admin/overview')
+
+export interface MeetingNote {
+  id: number
+  meeting_date: string
+  body: string
+}
+
+/** Everything the parent meeting page shows for one student. */
+export interface MeetingPageData {
+  analytics: StudentAnalytics
+  /** The last 30 days. */
+  questions: QuestionsSummary
+  questions_by_subject: { subject_id: number; solved: number; correct: number; wrong: number }[]
+  /** Topic counts per status for every subject, in booklet order. */
+  topic_progress: ({ subject_id: number; total: number } & Record<TopicStatus, number>)[]
+  /** Coach notes marked visible to parents, newest first. */
+  notes: Pick<CoachNote, 'id' | 'body' | 'created_at'>[]
+  /** Latest meeting first. */
+  meeting_notes: MeetingNote[]
+}
+
+export const fetchMeetingPage = (studentId: number) => request<MeetingPageData>(`/admin/students/${studentId}/meeting`)
+export const addMeetingNote = (studentId: number, note: { meeting_date: string; body: string }) =>
+  request<MeetingNote>(`/admin/students/${studentId}/meeting-notes`, json('POST', note))
+export const deleteMeetingNote = (noteId: number) => request<void>(`/admin/meeting-notes/${noteId}`, { method: 'DELETE' })

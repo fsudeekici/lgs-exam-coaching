@@ -8,13 +8,14 @@ from app.models import (
     Exam,
     ExamResult,
     ExamTopicMistake,
+    MeetingNote,
     QuestionLog,
     Role,
     Subject,
     TopicProgress,
     TopicStatus,
 )
-from app.seed import DEMO_EXAMS, seed_demo_exams, seed_demo_notes, seed_demo_study
+from app.seed import DEMO_EXAMS, seed_demo_exams, seed_demo_meeting_notes, seed_demo_notes, seed_demo_study
 from tests.conftest import make_user
 
 
@@ -118,3 +119,14 @@ def test_demo_notes_are_added_once(student):
 
         notes = db.scalars(select(CoachNote).where(CoachNote.student_id == student.id)).all()
         assert sorted(n.visible_to_parent for n in notes) == [False, True]
+
+
+def test_demo_meeting_notes_are_added_once_with_past_dates(student):
+    with SessionLocal() as db:
+        seed_demo_meeting_notes(db, student)
+        seed_demo_meeting_notes(db, student)
+        db.commit()
+
+        notes = db.scalars(select(MeetingNote).where(MeetingNote.student_id == student.id)).all()
+        assert len(notes) == 2
+        assert all(n.meeting_date < date.today() for n in notes)

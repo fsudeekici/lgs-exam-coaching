@@ -55,8 +55,11 @@ but keeps their exam results. Under "Veliler" the admin adds parents and links t
 ## Student analytics
 
 Clicking a student's name opens their detail page: the last exam against the one before it,
-net trend over exams (total and per subject), most frequent wrong topics, and the student's
+net trend over exams (total and per subject), weak topics, and the student's
 average per subject next to the average of all students who took the same exams.
+
+A topic is weak when it was marked wrong in at least 2 of the student's last 3 exams. The same
+rule is used everywhere weak topics appear (admin, student and parent views).
 
 ## Student panel
 
@@ -73,10 +76,23 @@ the student detail page.
 ## Parent panel and coach notes
 
 Parents log in to a short summary for each child linked to them: last exam, total net trend,
-most frequent wrong topics, and questions solved in the last 7 days.
+weak topics, and questions solved in the last 7 days.
 
 On the student detail page the admin writes coach notes and chooses per note whether the
 parent can see it. Parents see only the visible ones.
+
+## Admin overview and parent meetings
+
+The admin's home page ("Genel bakış") lists every active student with their last exam net, the
+change from the exam before it, questions solved in the last 7 days, and the number of weak
+topics. A student with no question log in the
+last 3 days is flagged.
+
+"Veli görüşmesi sayfası" on the student detail page opens one page to show at a parent
+meeting: summary cards, net trend, subject comparison, weak topics, questions in the last 30
+days, topic progress, and the coach notes marked visible to parents. "Yazdır / PDF kaydet"
+prints it or saves it as a PDF through the browser's print dialog. After each meeting the admin
+adds a dated meeting note at the bottom of that page; these notes are only visible to the admin.
 
 ## Subjects and topics
 

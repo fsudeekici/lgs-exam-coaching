@@ -95,7 +95,7 @@ export default function ExamDetailPage() {
   return (
     <DashboardLayout title={exam.name}>
       <p className="-mt-4 text-sm text-slate-500">
-        <Link to="/admin" className="text-indigo-700 hover:underline">
+        <Link to="/admin/exams" className="text-indigo-700 hover:underline">
           ← Denemeler
         </Link>
         <span className="mx-2">·</span>

@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 
 from app.api.admin_users import get_user_or_404
 from app.api.deps import DbSession, require_role
-from app.models import Exam, ExamResult, ExamTopicMistake, Role, Subject, Topic, User
+from app.models import Exam, ExamResult, Role, Subject, User
 from app.schemas.analytics import (
     Comparison,
     ExamPoint,
@@ -18,10 +18,9 @@ from app.schemas.analytics import (
     WeakTopic,
 )
 from app.services.scoring import exact_net, round_net
+from app.services.weak_topics import find_weak_topics
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_role(Role.admin))])
-
-WEAK_TOPIC_LIMIT = 10
 
 
 def net_change(last: Fraction, previous: Fraction | None) -> dict:
@@ -71,15 +70,7 @@ def build_student_analytics(db: DbSession, student: User) -> StudentAnalytics:
         point.total_net = round_net(sum(nets[exam.id].values()))
     exams = list(points.values())
 
-    weak_topics = db.execute(
-        select(Topic.id, Topic.name, Topic.subject_id, func.count().label("count"))
-        .join(ExamTopicMistake, ExamTopicMistake.topic_id == Topic.id)
-        .join(ExamResult, ExamResult.id == ExamTopicMistake.exam_result_id)
-        .where(ExamResult.student_id == student.id)
-        .group_by(Topic.id)
-        .order_by(func.count().desc(), Topic.id)
-        .limit(WEAK_TOPIC_LIMIT)
-    )
+    weak_topics = find_weak_topics(db, [student.id]).get(student.id, [])
 
     # Student vs everyone, over the exams this student took so both sides cover the same exams.
     student_average = func.avg(ExamResult.net).filter(ExamResult.student_id == student.id)
@@ -97,8 +88,8 @@ def build_student_analytics(db: DbSession, student: User) -> StudentAnalytics:
         exams=exams,
         comparison=compare_last_two(exams, nets),
         weak_topics=[
-            WeakTopic(topic_id=topic_id, name=name, subject_id=subject_id, count=count)
-            for topic_id, name, subject_id, count in weak_topics
+            WeakTopic(topic_id=topic.id, name=topic.name, subject_id=topic.subject_id, count=count)
+            for topic, count in weak_topics
         ],
         averages=[
             SubjectAverage(

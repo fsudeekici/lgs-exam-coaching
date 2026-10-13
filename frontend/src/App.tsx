@@ -7,6 +7,7 @@ import ExamDetailPage from './pages/ExamDetailPage'
 import ExamsPage from './pages/ExamsPage'
 import KvkkPage from './pages/KvkkPage'
 import LoginPage from './pages/LoginPage'
+import OverviewPage from './pages/OverviewPage'
 import ParentsPage from './pages/ParentsPage'
 import StudentLogPage from './pages/StudentLogPage'
 import StudentTopicsPage from './pages/StudentTopicsPage'
@@ -14,6 +15,7 @@ import StudentsPage from './pages/StudentsPage'
 
 // Loaded on demand: these are the only pages that need the charting library.
 const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'))
+const MeetingPage = lazy(() => import('./pages/MeetingPage'))
 const StudentAnalyticsPage = lazy(() => import('./pages/StudentAnalyticsPage'))
 const ParentHomePage = lazy(() => import('./pages/ParentHomePage'))
 
@@ -30,7 +32,8 @@ export default function App() {
             <Route path="/account" element={<AccountPage />} />
           </Route>
           <Route element={<ProtectedRoute role="admin" />}>
-            <Route path="/admin" element={<ExamsPage />} />
+            <Route path="/admin" element={<OverviewPage />} />
+            <Route path="/admin/exams" element={<ExamsPage />} />
             <Route path="/admin/exams/:examId" element={<ExamDetailPage />} />
             <Route path="/admin/students" element={<StudentsPage />} />
             <Route
@@ -38,6 +41,14 @@ export default function App() {
               element={
                 <Suspense fallback={loading}>
                   <StudentDetailPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/admin/students/:studentId/meeting"
+              element={
+                <Suspense fallback={loading}>
+                  <MeetingPage />
                 </Suspense>
               }
             />

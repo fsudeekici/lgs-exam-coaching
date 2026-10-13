@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { errorMessage, fetchMyChildren, type ChildSummary } from '../api'
-import { NetTrendChart, WeekQuestionsChart } from '../components/charts'
+import { DailyQuestionsChart, NetTrendChart } from '../components/charts'
 import DashboardLayout from '../components/DashboardLayout'
-import { Delta } from '../components/StudentAnalyticsView'
+import Delta from '../components/Delta'
 import { formatDate, formatNet, formatTimestamp } from '../format'
 
 const WEAK_TOPIC_COUNT = 5
@@ -108,9 +108,9 @@ function ChildSection({ child }: { child: ChildSummary }) {
         </Block>
       )}
 
-      <Block title="Zayıf konular" note="Denemelerde en sık yanlış yapılan konular.">
+      <Block title="Zayıf konular" note="Son 3 denemenin en az 2’sinde yanlış yapılan konular.">
         {weakTopics.length === 0 ? (
-          <p className="text-sm text-slate-500">Henüz işaretlenmiş bir konu yok.</p>
+          <p className="text-sm text-slate-500">Son 3 denemede tekrar eden yanlış konu yok.</p>
         ) : (
           <ol className="divide-y divide-slate-100">
             {weakTopics.slice(0, WEAK_TOPIC_COUNT).map((topic) => (
@@ -118,7 +118,7 @@ function ChildSection({ child }: { child: ChildSummary }) {
                 <span className="text-slate-900">
                   {topic.name} <span className="text-slate-400">· {subjectById.get(topic.subject_id)?.short_name}</span>
                 </span>
-                <span className="shrink-0 text-slate-600 tabular-nums">{topic.count} kez</span>
+                <span className="shrink-0 text-slate-600 tabular-nums">{topic.count} denemede</span>
               </li>
             ))}
           </ol>
@@ -135,7 +135,7 @@ function ChildSection({ child }: { child: ChildSummary }) {
         </p>
         {week.solved > 0 && (
           <div className="mt-3">
-            <WeekQuestionsChart days={week.days} height={150} />
+            <DailyQuestionsChart days={week.days} height={150} axis="weekday" />
           </div>
         )}
       </Block>

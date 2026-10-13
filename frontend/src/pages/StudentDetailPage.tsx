@@ -56,17 +56,25 @@ export default function StudentDetailPage() {
 
   return (
     <DashboardLayout title={student.full_name}>
-      <p className="-mt-4 text-sm text-slate-500">
-        <Link to="/admin/students" className="text-indigo-700 hover:underline">
-          ← Öğrenciler
+      <div className="-mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-500">
+          <Link to="/admin/students" className="text-indigo-700 hover:underline">
+            ← Öğrenciler
+          </Link>
+          {[student.school, student.class_name, student.is_active ? null : 'Pasif'].filter(Boolean).map((part) => (
+            <span key={part}>
+              <span className="mx-2">·</span>
+              {part}
+            </span>
+          ))}
+        </p>
+        <Link
+          to={`/admin/students/${student.id}/meeting`}
+          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Veli görüşmesi sayfası
         </Link>
-        {[student.school, student.class_name, student.is_active ? null : 'Pasif'].filter(Boolean).map((part) => (
-          <span key={part}>
-            <span className="mx-2">·</span>
-            {part}
-          </span>
-        ))}
-      </p>
+      </div>
 
       <StudentAnalyticsView data={analytics} examLinks />
 
