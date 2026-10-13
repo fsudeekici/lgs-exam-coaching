@@ -5,6 +5,8 @@ export interface User {
   email: string
   full_name: string
   role: Role
+  /** null until the user accepts the KVKK privacy notice. */
+  kvkk_consent_at: string | null
 }
 
 export interface Topic {
@@ -32,13 +34,18 @@ export interface Student extends UserRef {
   email: string
   school: string | null
   class_name: string | null
+  /** Day the parent's consent was received; the student cannot log in while it is null. */
+  parent_consent_date: string | null
   is_active: boolean
+  /** Blocked for now after too many wrong passwords. */
+  login_blocked: boolean
   parents: UserRef[]
 }
 
 export interface Parent extends UserRef {
   email: string
   is_active: boolean
+  login_blocked: boolean
   students: UserRef[]
 }
 
@@ -49,6 +56,8 @@ export interface StudentInput {
   password: string
   school: string
   class_name: string
+  /** null means consent has not been received (or has been withdrawn). */
+  parent_consent_date: string | null
 }
 
 export interface ParentInput {
@@ -111,6 +120,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const response = await fetch(`/api${path}`, { ...init, headers })
   if (!response.ok) {
+    // The session ended (expired, or the password was changed elsewhere): back to the login page.
+    if (response.status === 401 && token && path !== '/auth/login') {
+      clearToken()
+      if (window.location.pathname !== '/login') window.location.assign('/login')
+    }
     const body = await response.json().catch(() => null)
     const detail = typeof body?.detail === 'string' ? body.detail : 'Bir hata oluştu'
     throw new ApiError(response.status, detail)
@@ -139,6 +153,17 @@ export async function login(email: string, password: string): Promise<void> {
 
 export const fetchMe = () => request<User>('/auth/me')
 
+export const acceptPrivacyNotice = () => request<User>('/auth/consent', { method: 'POST' })
+
+/** Changes the password and switches to the new token (older tokens stop working). */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const { access_token } = await request<{ access_token: string }>(
+    '/auth/change-password',
+    json('POST', { current_password: currentPassword, new_password: newPassword }),
+  )
+  setToken(access_token)
+}
+
 export const fetchSubjects = () => request<Subject[]>('/admin/subjects')
 export const fetchStudents = () => request<Student[]>('/admin/students')
 export const fetchExams = () => request<Exam[]>('/admin/exams')
@@ -156,6 +181,9 @@ export const deleteStudentResults = (examId: number, studentId: number) =>
 export const createStudent = (student: StudentInput) => request<Student>('/admin/students', json('POST', student))
 export const updateStudent = (id: number, changes: Partial<StudentInput & { is_active: boolean }>) =>
   request<Student>(`/admin/students/${id}`, json('PATCH', changes))
+
+export const unblockStudentLogin = (id: number) => request<Student>(`/admin/students/${id}/unblock-login`, { method: 'POST' })
+export const unblockParentLogin = (id: number) => request<Parent>(`/admin/parents/${id}/unblock-login`, { method: 'POST' })
 
 export const fetchParents = () => request<Parent[]>('/admin/parents')
 export const createParent = (parent: ParentInput) => request<Parent>('/admin/parents', json('POST', parent))

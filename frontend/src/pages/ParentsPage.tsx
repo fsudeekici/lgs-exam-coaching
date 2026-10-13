@@ -4,12 +4,13 @@ import {
   errorMessage,
   fetchParents,
   fetchStudents,
+  unblockParentLogin,
   updateParent,
   type Parent,
   type ParentInput,
   type Student,
 } from '../api'
-import AccountFields, { StatusBadge } from '../components/AccountFields'
+import AccountFields, { LoginBlockedBadge, LoginBlockedNotice, StatusBadge } from '../components/AccountFields'
 import DashboardLayout from '../components/DashboardLayout'
 import { byName } from '../format'
 
@@ -87,6 +88,18 @@ export default function ParentsPage() {
     }
   }
 
+  const unblock = async (id: number) => {
+    setError(null)
+    setMessage(null)
+    try {
+      const saved = await unblockParentLogin(id)
+      upsert(saved)
+      setMessage(`${saved.full_name} için giriş engeli kaldırıldı.`)
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
   const toggleActive = async (parent: Parent) => {
     if (parent.is_active && !window.confirm(`${parent.full_name} pasifleştirilsin mi? Giriş yapamaz.`)) return
     setError(null)
@@ -99,6 +112,7 @@ export default function ParentsPage() {
   }
 
   // Offer active students, plus any deactivated one that is already linked.
+  const editing = parents?.find((parent) => parent.id === editingId)
   const selectable = students.filter((s) => s.is_active || form.student_ids.includes(s.id))
 
   return (
@@ -133,6 +147,8 @@ export default function ParentsPage() {
             {selectable.length === 0 && <span className="text-sm text-slate-500">Önce öğrenci ekleyin.</span>}
           </div>
         </fieldset>
+
+        {editing?.login_blocked && <LoginBlockedNotice onUnblock={() => unblock(editing.id)} />}
 
         <div className="mt-4 flex gap-3">
           <button
@@ -184,6 +200,7 @@ export default function ParentsPage() {
                 <td className="px-4 py-2">{parent.students.map((s) => s.full_name).join(', ') || '—'}</td>
                 <td className="px-4 py-2">
                   <StatusBadge active={parent.is_active} />
+                  {parent.login_blocked && <LoginBlockedBadge />}
                 </td>
                 <td className="px-4 py-2 text-right whitespace-nowrap">
                   <button onClick={() => startEdit(parent)} className="text-indigo-700 hover:underline">

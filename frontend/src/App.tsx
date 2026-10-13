@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
+import AccountPage from './pages/AccountPage'
 import ExamDetailPage from './pages/ExamDetailPage'
 import ExamsPage from './pages/ExamsPage'
+import KvkkPage from './pages/KvkkPage'
 import LoginPage from './pages/LoginPage'
 import ParentsPage from './pages/ParentsPage'
 import StudentLogPage from './pages/StudentLogPage'
@@ -23,6 +25,10 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/kvkk" element={<KvkkPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/account" element={<AccountPage />} />
+          </Route>
           <Route element={<ProtectedRoute role="admin" />}>
             <Route path="/admin" element={<ExamsPage />} />
             <Route path="/admin/exams/:examId" element={<ExamDetailPage />} />

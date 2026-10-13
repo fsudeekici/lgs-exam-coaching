@@ -201,6 +201,10 @@ def main() -> None:
                 get_or_create_user(db, email, full_name, DEMO_PASSWORD, Role.student)
                 for email, full_name in DEMO_STUDENTS
             ]
+            # Demo students can log in straight away: treat their parent's consent as received.
+            for student in students:
+                if student.parent_consent_date is None:
+                    student.parent_consent_date = date.today()
             parent = get_or_create_user(db, "parent@example.com", "Demo Veli", DEMO_PASSWORD, Role.parent)
             if students[0] not in parent.students:
                 parent.students.append(students[0])

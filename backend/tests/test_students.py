@@ -7,6 +7,7 @@ NEW_STUDENT = {
     "password": "gizli-sifre",
     "school": "Atatürk Ortaokulu",
     "class_name": "8-A",
+    "parent_consent_date": "2026-09-01",
 }
 
 
@@ -30,6 +31,8 @@ def test_create_student(client, admin):
     assert body["email"] == "elif@test.dev"
     assert body["school"] == "Atatürk Ortaokulu"
     assert body["class_name"] == "8-A"
+    assert body["parent_consent_date"] == "2026-09-01"
+    assert body["login_blocked"] is False
     assert body["is_active"] is True
     assert body["parents"] == []
     assert "password" not in body and "hashed_password" not in body
@@ -135,8 +138,9 @@ def test_create_parent_linked_to_students(client, admin, student):
     students = {s["id"]: s for s in client.get("/api/admin/students", headers=admin).json()}
     assert students[student.id]["parents"] == [{"id": body["id"], "full_name": "Fatma Demir"}]
 
+    # The new parent can log in, as a parent.
     token = login(client, "veli@test.dev", "gizli-sifre").json()["access_token"]
-    assert client.get("/api/parent/dashboard", headers={"Authorization": f"Bearer {token}"}).status_code == 200
+    assert client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"}).json()["role"] == "parent"
 
 
 def test_parent_can_only_be_linked_to_students(client, admin):

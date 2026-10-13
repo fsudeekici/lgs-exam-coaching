@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 from app.models import Role
+from app.schemas.user import Password
 
 
 class Token(BaseModel):
@@ -15,3 +18,10 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     role: Role
+    # Empty until the user accepts the KVKK privacy notice.
+    kvkk_consent_at: datetime | None
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: Password

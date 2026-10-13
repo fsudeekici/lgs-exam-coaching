@@ -15,8 +15,10 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(user_id: int, role: str) -> str:
-    expires = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
-    payload = {"sub": str(user_id), "role": role, "exp": expires}
+    now = datetime.now(timezone.utc)
+    expires = now + timedelta(minutes=settings.access_token_expire_minutes)
+    # iat keeps sub-second precision so tokens from before a password change can be told apart.
+    payload = {"sub": str(user_id), "role": role, "iat": now.timestamp(), "exp": expires}
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 

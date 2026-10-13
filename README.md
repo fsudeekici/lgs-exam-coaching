@@ -89,6 +89,102 @@ those already used in recorded exam mistakes, which are kept and reported.
 Net = correct − wrong / 3. `exam_results.net` is a generated column in PostgreSQL;
 `app.services.scoring.calculate_net` is the same rule in Python.
 
+## Accounts and privacy
+
+- Every user is shown the KVKK privacy notice (aydınlatma metni) on first login and must accept
+  it before using the app; the date is stored. The notice is also public at `/kvkk`.
+- A student cannot log in until the admin ticks "Veli onayı alındı" on the student form and
+  enters the date the parent's consent was received. Unticking it later signs the student out.
+- Users change their own password under "Hesabım" (click your name in the header). The admin
+  resets a student's or parent's password from the edit form on the Öğrenciler / Veliler pages.
+  Any password change signs that user out everywhere else.
+- After 5 wrong passwords for one email within 15 minutes, logins for that email are blocked
+  until the window passes (`LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_MINUTES`). The admin sees a
+  "Giriş engelli" badge on that user and can lift the block from their edit form.
+- The site asks search engines not to index it (`robots.txt`, a `noindex` meta tag, and an
+  `X-Robots-Tag` header in production).
+
+## Production deployment
+
+The production stack is three containers: PostgreSQL, the backend, and nginx serving the built
+frontend and passing `/api` to the backend. Only nginx publishes a port.
+
+### Before the first deploy
+
+1. Fill in the data controller details in `frontend/src/kvkk.ts` (name, address, email, server
+   location). **The notice text in `frontend/src/components/KvkkNotice.tsx` is a template, not
+   legal advice. Have it reviewed by a lawyer**, in particular how consent is collected for
+   students under 18.
+2. On the server, install Docker with the Compose plugin and clone this repository.
+3. Create the settings file and fill in every value:
+
+   ```sh
+   cp .env.example .env
+   chmod 600 .env
+   ```
+
+   `JWT_SECRET` must be at least 32 random characters (`openssl rand -hex 32`); the backend
+   refuses to start with a short or placeholder secret or admin password.
+
+### Deploy
+
+```sh
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+On every start the backend applies database migrations, updates subjects and topics from
+`backend/seed/lgs_topics_seed.json`, and creates the admin from `ADMIN_EMAIL` /
+`ADMIN_PASSWORD` if no user has that email yet. Then:
+
+1. Open the site, log in as the admin, accept the notice, and change the password under
+   "Hesabım".
+2. Add students and parents, and record each student's parent consent so they can log in.
+   Do not run the `--demo` seed in production.
+
+To update later: `git pull`, then run the same `up -d --build` command.
+
+Useful commands:
+
+```sh
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs -f backend
+```
+
+### HTTPS
+
+nginx in this stack serves plain HTTP on `HTTP_PORT`. **Do not expose it to the internet
+without HTTPS**: passwords and student data would travel unencrypted. Put a TLS-terminating
+proxy in front, for example Caddy on the same server with `HTTP_PORT=8080` in `.env`:
+
+```
+ornek-alan-adi.com {
+    reverse_proxy localhost:8080
+}
+```
+
+In that case also make sure port 8080 is closed to the outside in the firewall.
+
+### Backups
+
+`scripts/backup.sh` writes a compressed dump of the database to `BACKUP_DIR` (default
+`./backups`) and deletes dumps older than `BACKUP_KEEP_DAYS` (default 14). Run it daily from
+cron on the server:
+
+```
+0 3 * * * /path/to/lgs-exam-coaching/scripts/backup.sh >> /var/log/lgs-backup.log 2>&1
+```
+
+It exits with an error, and keeps no partial file, if the dump fails. The dumps contain
+personal data and sit on the same server as the database: copy them somewhere else as well,
+and try a restore once before you rely on them.
+
+Restore a dump (this replaces the current data):
+
+```sh
+gunzip -c backups/lgs_YYYYMMDD_HHMMSS.sql.gz | \
+  docker compose -f docker-compose.prod.yml exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
 ## Tests
 
 ```sh

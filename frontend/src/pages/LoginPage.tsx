@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { errorMessage } from '../api'
 import { useAuth } from '../auth/useAuth'
 
@@ -73,6 +73,12 @@ export default function LoginPage() {
         >
           {submitting ? 'Giriş yapılıyor…' : 'Giriş yap'}
         </button>
+
+        <p className="mt-4 text-center text-xs text-slate-500">
+          <Link to="/kvkk" className="hover:underline">
+            KVKK Aydınlatma Metni
+          </Link>
+        </p>
       </form>
     </div>
   )
