@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { clearToken, fetchMe, getToken, login as apiLogin, type User } from '../api'
+import { acceptPrivacyNotice as apiAccept, clearToken, fetchMe, getToken, login as apiLogin, type User } from '../api'
 import { AuthContext } from './useAuth'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -27,5 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  return <AuthContext value={{ user, loading, login, logout }}>{children}</AuthContext>
+  const acceptPrivacyNotice = async () => setUser(await apiAccept())
+
+  return <AuthContext value={{ user, loading, login, logout, acceptPrivacyNotice }}>{children}</AuthContext>
 }

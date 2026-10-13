@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
@@ -12,7 +13,14 @@ def check_password(password: str) -> str:
     return password
 
 
+def not_in_future(value: date | None) -> date | None:
+    if value is not None and value > date.today():
+        raise ValueError("Veli onay tarihi ileri bir tarih olamaz")
+    return value
+
+
 Name = Annotated[str, Field(min_length=1, max_length=255)]
+ConsentDate = Annotated[date | None, AfterValidator(not_in_future)]
 Password = Annotated[str, AfterValidator(check_password)]
 
 
@@ -27,13 +35,18 @@ class StudentOut(UserRef):
     email: str
     school: str | None
     class_name: str | None
+    # Empty until the admin records the parent's consent; the student cannot log in before that.
+    parent_consent_date: date | None
     is_active: bool
+    # Too many wrong passwords: logins for this email are blocked for now.
+    login_blocked: bool = False
     parents: list[UserRef]
 
 
 class ParentOut(UserRef):
     email: str
     is_active: bool
+    login_blocked: bool = False
     students: list[UserRef]
 
 
@@ -45,6 +58,7 @@ class StudentCreate(BaseModel):
     password: Password
     school: str | None = Field(default=None, max_length=255)
     class_name: str | None = Field(default=None, max_length=50)
+    parent_consent_date: ConsentDate = None
 
 
 class ParentCreate(BaseModel):
@@ -66,6 +80,8 @@ class StudentUpdate(BaseModel):
     password: Password | None = None
     school: str | None = Field(default=None, max_length=255)
     class_name: str | None = Field(default=None, max_length=50)
+    # Unlike the other fields, sending null here clears the consent; leave it out to keep it.
+    parent_consent_date: ConsentDate = None
     is_active: bool | None = None
 
 

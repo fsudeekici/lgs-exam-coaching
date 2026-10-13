@@ -58,9 +58,9 @@ export default function DashboardLayout({ title, children, narrow }: Props) {
             )}
           </div>
           <div className="flex items-center gap-4 text-sm">
-            <span className="text-slate-600">
+            <Link to="/account" className="text-slate-600 hover:text-indigo-700 hover:underline" title="Hesabım">
               {user?.full_name} {user && <span className="text-slate-400">({ROLE_LABELS[user.role]})</span>}
-            </span>
+            </Link>
             <button
               onClick={logout}
               className="rounded-md border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-100"
@@ -79,6 +79,11 @@ export default function DashboardLayout({ title, children, narrow }: Props) {
             </div>
           )}
         </div>
+        <footer className="mt-10 text-center text-xs text-slate-400">
+          <Link to="/kvkk" className="hover:text-slate-600 hover:underline">
+            KVKK Aydınlatma Metni
+          </Link>
+        </footer>
       </main>
       {bottomNav && (
         <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden">

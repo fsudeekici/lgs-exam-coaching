@@ -6,6 +6,7 @@ from app.api.deps import DbSession, require_role
 from app.core.security import hash_password
 from app.models import Role, User
 from app.schemas.user import ParentCreate, ParentOut, ParentUpdate, StudentCreate, StudentOut, StudentUpdate
+from app.services.accounts import clear_login_failures, mark_login_blocked, set_password
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_role(Role.admin))])
 
@@ -40,7 +41,7 @@ def apply_account_fields(db: DbSession, user: User, payload: StudentUpdate | Par
         ensure_email_free(db, email, user.id)
         user.email = email
     if payload.password is not None:
-        user.hashed_password = hash_password(payload.password)
+        set_password(user, payload.password)
     if payload.is_active is not None:
         user.is_active = payload.is_active
 
@@ -48,12 +49,14 @@ def apply_account_fields(db: DbSession, user: User, payload: StudentUpdate | Par
 @router.get("/students", response_model=list[StudentOut])
 def list_students(db: DbSession):
     """All students, including deactivated ones."""
-    return db.scalars(
+    students = db.scalars(
         select(User)
         .where(User.role == Role.student)
         .options(selectinload(User.parents))
         .order_by(User.full_name, User.id)
     ).all()
+    mark_login_blocked(db, students)
+    return students
 
 
 @router.post("/students", response_model=StudentOut, status_code=status.HTTP_201_CREATED)
@@ -67,6 +70,7 @@ def create_student(payload: StudentCreate, db: DbSession):
         hashed_password=hash_password(payload.password),
         school=payload.school or None,
         class_name=payload.class_name or None,
+        parent_consent_date=payload.parent_consent_date,
     )
     db.add(student)
     db.commit()
@@ -82,18 +86,32 @@ def update_student(student_id: int, payload: StudentUpdate, db: DbSession):
         student.school = payload.school or None
     if payload.class_name is not None:
         student.class_name = payload.class_name or None
+    if "parent_consent_date" in payload.model_fields_set:
+        student.parent_consent_date = payload.parent_consent_date
+    db.commit()
+    mark_login_blocked(db, [student])
+    return student
+
+
+@router.post("/students/{student_id}/unblock-login", response_model=StudentOut)
+def unblock_student_login(student_id: int, db: DbSession):
+    """Lift the block that follows too many wrong passwords."""
+    student = get_user_or_404(db, student_id, Role.student)
+    clear_login_failures(db, student.email)
     db.commit()
     return student
 
 
 @router.get("/parents", response_model=list[ParentOut])
 def list_parents(db: DbSession):
-    return db.scalars(
+    parents = db.scalars(
         select(User)
         .where(User.role == Role.parent)
         .options(selectinload(User.students))
         .order_by(User.full_name, User.id)
     ).all()
+    mark_login_blocked(db, parents)
+    return parents
 
 
 @router.post("/parents", response_model=ParentOut, status_code=status.HTTP_201_CREATED)
@@ -118,5 +136,14 @@ def update_parent(parent_id: int, payload: ParentUpdate, db: DbSession):
     apply_account_fields(db, parent, payload)
     if payload.student_ids is not None:
         parent.students = load_students(db, payload.student_ids)
+    db.commit()
+    mark_login_blocked(db, [parent])
+    return parent
+
+
+@router.post("/parents/{parent_id}/unblock-login", response_model=ParentOut)
+def unblock_parent_login(parent_id: int, db: DbSession):
+    parent = get_user_or_404(db, parent_id, Role.parent)
+    clear_login_failures(db, parent.email)
     db.commit()
     return parent

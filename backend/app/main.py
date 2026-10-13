@@ -4,7 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import admin, admin_analytics, admin_study, admin_users, auth, dashboards, parent, student
 from app.core.config import settings
 
-app = FastAPI(title="LGS Exam Coaching")
+# The interactive API docs are a development tool; they are not served in production.
+docs = {"docs_url": None, "redoc_url": None, "openapi_url": None} if settings.is_production else {}
+app = FastAPI(title="LGS Exam Coaching", **docs)
 
 app.add_middleware(
     CORSMiddleware,

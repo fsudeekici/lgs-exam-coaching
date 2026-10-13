@@ -6,6 +6,8 @@ export interface AuthState {
   loading: boolean
   login: (email: string, password: string) => Promise<User>
   logout: () => void
+  /** Records that the user accepted the KVKK privacy notice. */
+  acceptPrivacyNotice: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthState | null>(null)

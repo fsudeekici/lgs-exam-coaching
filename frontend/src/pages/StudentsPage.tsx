@@ -1,11 +1,25 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { createStudent, errorMessage, fetchStudents, updateStudent, type Student, type StudentInput } from '../api'
-import AccountFields, { inputClass, labelClass, StatusBadge } from '../components/AccountFields'
+import {
+  createStudent,
+  errorMessage,
+  fetchStudents,
+  unblockStudentLogin,
+  updateStudent,
+  type Student,
+  type StudentInput,
+} from '../api'
+import AccountFields, {
+  inputClass,
+  labelClass,
+  LoginBlockedBadge,
+  LoginBlockedNotice,
+  StatusBadge,
+} from '../components/AccountFields'
 import DashboardLayout from '../components/DashboardLayout'
-import { byName } from '../format'
+import { byName, daysAgo, formatDate } from '../format'
 
-const EMPTY: StudentInput = { full_name: '', email: '', password: '', school: '', class_name: '' }
+const EMPTY: StudentInput = { full_name: '', email: '', password: '', school: '', class_name: '', parent_consent_date: null }
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[] | null>(null)
@@ -37,6 +51,7 @@ export default function StudentsPage() {
       password: '',
       school: student.school ?? '',
       class_name: student.class_name ?? '',
+      parent_consent_date: student.parent_consent_date,
     })
     setMessage(null)
     setError(null)
@@ -68,6 +83,18 @@ export default function StudentsPage() {
     }
   }
 
+  const unblock = async (id: number) => {
+    setError(null)
+    setMessage(null)
+    try {
+      const saved = await unblockStudentLogin(id)
+      upsert(saved)
+      setMessage(`${saved.full_name} için giriş engeli kaldırıldı.`)
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
   const toggleActive = async (student: Student) => {
     if (
       student.is_active &&
@@ -83,6 +110,9 @@ export default function StudentsPage() {
       setError(errorMessage(err))
     }
   }
+
+  const editing = students?.find((student) => student.id === editingId)
+  const today = daysAgo(0)
 
   return (
     <DashboardLayout title="Öğrenciler">
@@ -116,6 +146,30 @@ export default function StudentsPage() {
             />
           </label>
         </div>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+            <input
+              type="checkbox"
+              checked={form.parent_consent_date !== null}
+              onChange={(e) => setForm({ ...form, parent_consent_date: e.target.checked ? today : null })}
+            />
+            Veli onayı alındı
+          </label>
+          {form.parent_consent_date !== null ? (
+            <input
+              type="date"
+              aria-label="Veli onay tarihi"
+              required
+              max={today}
+              value={form.parent_consent_date}
+              onChange={(e) => setForm({ ...form, parent_consent_date: e.target.value || today })}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-slate-900"
+            />
+          ) : (
+            <span className="text-sm text-slate-500">Veli onayı işaretlenmeden öğrenci giriş yapamaz.</span>
+          )}
+        </div>
+        {editing?.login_blocked && <LoginBlockedNotice onUnblock={() => unblock(editing.id)} />}
         <div className="mt-4 flex gap-3">
           <button
             type="submit"
@@ -156,6 +210,7 @@ export default function StudentsPage() {
               <th className="px-4 py-2 font-medium">Okul</th>
               <th className="px-4 py-2 font-medium">Sınıf</th>
               <th className="px-4 py-2 font-medium">Veliler</th>
+              <th className="px-4 py-2 font-medium">Veli onayı</th>
               <th className="px-4 py-2 font-medium">Durum</th>
               <th />
             </tr>
@@ -172,8 +227,18 @@ export default function StudentsPage() {
                 <td className="px-4 py-2">{student.school ?? '—'}</td>
                 <td className="px-4 py-2">{student.class_name ?? '—'}</td>
                 <td className="px-4 py-2">{student.parents.map((p) => p.full_name).join(', ') || '—'}</td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  {student.parent_consent_date ? (
+                    formatDate(student.parent_consent_date)
+                  ) : (
+                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900">
+                      Bekleniyor · giriş kapalı
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-2">
                   <StatusBadge active={student.is_active} />
+                  {student.login_blocked && <LoginBlockedBadge />}
                 </td>
                 <td className="px-4 py-2 text-right whitespace-nowrap">
                   <button onClick={() => startEdit(student)} className="text-indigo-700 hover:underline">
@@ -190,7 +255,7 @@ export default function StudentsPage() {
             ))}
             {students?.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                   Henüz öğrenci yok.
                 </td>
               </tr>

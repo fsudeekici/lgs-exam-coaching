@@ -7,6 +7,7 @@ and brought up to date with Alembic, so the migrations are exercised too.
 
 import os
 from collections.abc import Iterator
+from datetime import date, datetime, timezone
 
 os.environ.setdefault("JWT_SECRET", "test-secret-only-used-when-none-is-configured")
 
@@ -60,7 +61,7 @@ def clean_tables(database: None) -> Iterator[None]:
     yield
     # Subjects and topics are reference data and stay.
     with engine.begin() as conn:
-        conn.execute(text("TRUNCATE users, exams RESTART IDENTITY CASCADE"))
+        conn.execute(text("TRUNCATE users, exams, login_attempts RESTART IDENTITY CASCADE"))
 
 
 @pytest.fixture
@@ -69,6 +70,11 @@ def client() -> TestClient:
 
 
 def make_user(role: Role, email: str, full_name: str, **fields) -> User:
+    """Create a user who has already accepted the KVKK notice (pass kvkk_consent_at=None for one who has not)."""
+    fields.setdefault("kvkk_consent_at", datetime.now(timezone.utc))
+    if role == Role.student:
+        # ...and whose parent's consent is on record (pass parent_consent_date=None for one without).
+        fields.setdefault("parent_consent_date", date.today())
     with SessionLocal() as db:
         user = User(role=role, email=email, full_name=full_name, hashed_password=hash_password(PASSWORD), **fields)
         db.add(user)
