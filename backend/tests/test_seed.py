@@ -1,8 +1,20 @@
+from datetime import date, timedelta
+
 from sqlalchemy import func, select
 
 from app.database import SessionLocal
-from app.models import Exam, ExamResult, ExamTopicMistake, Role, Subject
-from app.seed import DEMO_EXAMS, seed_demo_exams
+from app.models import (
+    CoachNote,
+    Exam,
+    ExamResult,
+    ExamTopicMistake,
+    QuestionLog,
+    Role,
+    Subject,
+    TopicProgress,
+    TopicStatus,
+)
+from app.seed import DEMO_EXAMS, seed_demo_exams, seed_demo_notes, seed_demo_study
 from tests.conftest import make_user
 
 
@@ -23,6 +35,7 @@ def test_demo_exams_have_valid_results_for_every_student(student):
         db.commit()
 
         assert [e.name for e in db.scalars(select(Exam).order_by(Exam.exam_date))] == [name for name, _, _ in DEMO_EXAMS]
+        assert db.scalar(select(func.max(Exam.exam_date))) < date.today()
         results = db.execute(select(ExamResult, Subject).join(Subject, Subject.id == ExamResult.subject_id)).all()
         # 4 exams x 2 students x 6 subjects
         assert len(results) == 48
@@ -47,3 +60,61 @@ def test_demo_exams_are_not_duplicated_or_changed_on_reseed(student):
 
         assert db.scalar(select(func.count()).select_from(Exam)) == 4
         assert snapshot(db) == first
+
+
+def study_counts(db, student_id):
+    return (
+        db.scalar(select(func.count()).select_from(QuestionLog).where(QuestionLog.student_id == student_id)),
+        db.scalar(select(func.count()).select_from(TopicProgress).where(TopicProgress.student_id == student_id)),
+    )
+
+
+def test_demo_study_data_covers_the_last_30_days(student):
+    other = make_user(Role.student, "ali@test.dev", "Ali Can")
+
+    with SessionLocal() as db:
+        seed_demo_study(db, [student, other])
+        db.commit()
+
+        today = date.today()
+        for who in (student, other):
+            logs = db.scalars(select(QuestionLog).where(QuestionLog.student_id == who.id)).all()
+            days = {log.log_date for log in logs}
+            assert min(days) >= today - timedelta(days=29) and max(days) <= today
+            # Most days have entries, but not all: there are days off.
+            assert 15 <= len(days) <= 30
+            assert all(0 < log.solved and log.correct + log.wrong <= log.solved for log in logs)
+            statuses = set(db.scalars(select(TopicProgress.status).where(TopicProgress.student_id == who.id)))
+            assert statuses == {TopicStatus.studying, TopicStatus.done, TopicStatus.needs_review}
+
+
+def test_demo_study_data_is_not_added_twice_or_over_existing_data(student):
+    other = make_user(Role.student, "ali@test.dev", "Ali Can")
+
+    with SessionLocal() as db:
+        # `other` already uses the app: one log, no topic progress.
+        subject = db.scalars(select(Subject)).first()
+        db.add(QuestionLog(student_id=other.id, log_date=date.today(), subject_id=subject.id, solved=5, correct=5, wrong=0))
+        db.commit()
+
+        seed_demo_study(db, [student, other])
+        db.commit()
+        first = study_counts(db, student.id)
+        seed_demo_study(db, [student, other])
+        db.commit()
+
+        assert study_counts(db, student.id) == first
+        assert first[0] > 0 and first[1] > 0
+        # Their own log is left alone; the missing topic progress is filled in.
+        other_logs, other_progress = study_counts(db, other.id)
+        assert other_logs == 1 and other_progress > 0
+
+
+def test_demo_notes_are_added_once(student):
+    with SessionLocal() as db:
+        seed_demo_notes(db, student)
+        seed_demo_notes(db, student)
+        db.commit()
+
+        notes = db.scalars(select(CoachNote).where(CoachNote.student_id == student.id)).all()
+        assert sorted(n.visible_to_parent for n in notes) == [False, True]

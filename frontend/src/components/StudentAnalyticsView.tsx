@@ -215,7 +215,7 @@ export function Card({ children }: { children: ReactNode }) {
 }
 
 /** Signed change with an arrow, so direction never depends on colour alone. */
-function Delta({ change }: { change: number | null }) {
+export function Delta({ change }: { change: number | null }) {
   if (change === null) return <span className="text-slate-400">—</span>
   if (change === 0) return <span className="tabular-nums text-slate-500">= değişmedi</span>
   return (

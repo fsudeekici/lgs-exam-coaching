@@ -11,6 +11,7 @@ import {
   type Subject,
   type TopicProgress,
 } from '../api'
+import CoachNotes from '../components/CoachNotes'
 import DashboardLayout from '../components/DashboardLayout'
 import StudentAnalyticsView, { Card, Section } from '../components/StudentAnalyticsView'
 import { LogTotals, QuestionLogList, StatusCounts, TopicStatusBadge } from '../components/study'
@@ -68,6 +69,10 @@ export default function StudentDetailPage() {
       </p>
 
       <StudentAnalyticsView data={analytics} examLinks />
+
+      <Section title="Koç notları" note="Öğrenci hakkındaki notlarınız. Veli yalnızca görünür işaretlediklerinizi görür.">
+        <CoachNotes studentId={student.id} />
+      </Section>
 
       <div className="grid gap-x-6 lg:grid-cols-2">
         <Section title="Soru takibi" note="Öğrencinin son 30 günde girdiği günlük soru kayıtları.">

@@ -25,3 +25,11 @@ export const daysAgo = (days: number) => {
   date.setDate(date.getDate() - days)
   return toIsoDate(date)
 }
+
+/** Date part of a timestamp, as DD.MM.YYYY in local time. */
+export const formatTimestamp = (timestamp: string) => formatDate(toIsoDate(new Date(timestamp)))
+
+const WEEKDAYS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt']
+
+/** Short Turkish weekday name for an ISO date. */
+export const formatWeekday = (isoDate: string) => WEEKDAYS[new Date(`${isoDate}T00:00:00`).getDay()]
