@@ -20,13 +20,6 @@ class SubjectOut(BaseModel):
     topics: list[TopicOut]
 
 
-class StudentOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    full_name: str
-
-
 class ExamCreate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 

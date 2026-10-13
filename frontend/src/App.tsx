@@ -4,8 +4,10 @@ import ProtectedRoute from './components/ProtectedRoute'
 import ExamDetailPage from './pages/ExamDetailPage'
 import ExamsPage from './pages/ExamsPage'
 import LoginPage from './pages/LoginPage'
+import ParentsPage from './pages/ParentsPage'
 import ParentDashboard from './pages/ParentDashboard'
 import StudentDashboard from './pages/StudentDashboard'
+import StudentsPage from './pages/StudentsPage'
 
 export default function App() {
   return (
@@ -16,6 +18,8 @@ export default function App() {
           <Route element={<ProtectedRoute role="admin" />}>
             <Route path="/admin" element={<ExamsPage />} />
             <Route path="/admin/exams/:examId" element={<ExamDetailPage />} />
+            <Route path="/admin/students" element={<StudentsPage />} />
+            <Route path="/admin/parents" element={<ParentsPage />} />
           </Route>
           <Route element={<ProtectedRoute role="student" />}>
             <Route path="/student" element={<StudentDashboard />} />

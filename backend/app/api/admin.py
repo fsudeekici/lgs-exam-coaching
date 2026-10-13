@@ -9,7 +9,6 @@ from app.schemas.exam import (
     ExamDetail,
     ExamOut,
     ResultOut,
-    StudentOut,
     StudentResultsIn,
     StudentResultsOut,
     SubjectOut,
@@ -19,7 +18,7 @@ router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(requir
 
 
 def invalid(detail: str) -> HTTPException:
-    return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+    return HTTPException(status_code=422, detail=detail)
 
 
 def get_exam_or_404(db: DbSession, exam_id: int) -> Exam:
@@ -72,13 +71,6 @@ def load_student_results(db: DbSession, exam_id: int, student_id: int | None = N
 @router.get("/subjects", response_model=list[SubjectOut])
 def list_subjects(db: DbSession):
     return db.scalars(select(Subject).options(selectinload(Subject.topics)).order_by(Subject.display_order)).all()
-
-
-@router.get("/students", response_model=list[StudentOut])
-def list_students(db: DbSession):
-    return db.scalars(
-        select(User).where(User.role == Role.student, User.is_active).order_by(User.full_name, User.id)
-    ).all()
 
 
 @router.get("/exams", response_model=list[ExamOut])

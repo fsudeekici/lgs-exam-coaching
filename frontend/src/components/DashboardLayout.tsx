@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import type { Role } from '../api'
 import { useAuth } from '../auth/useAuth'
+
+const ADMIN_NAV = [
+  { to: '/admin', label: 'Denemeler' },
+  { to: '/admin/students', label: 'Öğrenciler' },
+  { to: '/admin/parents', label: 'Veliler' },
+]
 
 const ROLE_LABELS: Record<Role, string> = { admin: 'Yönetici', student: 'Öğrenci', parent: 'Veli' }
 
@@ -12,9 +18,27 @@ export default function DashboardLayout({ title, children }: { title: ReactNode;
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <Link to="/" className="font-semibold text-slate-900">
-            LGS Koçluk
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link to="/" className="font-semibold text-slate-900">
+              LGS Koçluk
+            </Link>
+            {user?.role === 'admin' && (
+              <nav className="flex gap-1 text-sm">
+                {ADMIN_NAV.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === '/admin'}
+                    className={({ isActive }) =>
+                      `rounded-md px-3 py-1.5 ${isActive ? 'bg-indigo-50 font-medium text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
+            )}
+          </div>
           <div className="flex items-center gap-4 text-sm">
             <span className="text-slate-600">
               {user?.full_name} {user && <span className="text-slate-400">({ROLE_LABELS[user.role]})</span>}
