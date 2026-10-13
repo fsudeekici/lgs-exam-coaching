@@ -15,8 +15,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const login = async (email: string, password: string) => {
-    await apiLogin(email, password)
+  const login = async (email: string, password: string, rememberMe: boolean) => {
+    await apiLogin(email, password, rememberMe)
     const me = await fetchMe()
     setUser(me)
     return me

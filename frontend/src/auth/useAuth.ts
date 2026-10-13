@@ -4,7 +4,7 @@ import type { User } from '../api'
 export interface AuthState {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<User>
+  login: (email: string, password: string, rememberMe: boolean) => Promise<User>
   logout: () => void
   /** Records that the user accepted the KVKK privacy notice. */
   acceptPrivacyNotice: () => Promise<void>

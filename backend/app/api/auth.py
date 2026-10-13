@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import delete, func, select
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import CurrentUser, DbSession, TokenPayload
 from app.core.config import settings
 from app.core.security import create_access_token, verify_password
 from app.models import LoginAttempt, User
@@ -16,8 +16,15 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=Token)
-def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], request: Request, db: DbSession) -> Token:
+def login(
+    form: Annotated[OAuth2PasswordRequestForm, Depends()],
+    request: Request,
+    db: DbSession,
+    remember_me: Annotated[bool, Form()] = False,
+) -> Token:
     """Log in with email (sent in the OAuth2 `username` field) and password.
+
+    With `remember_me` the session lasts REMEMBER_ME_DAYS instead of ACCESS_TOKEN_EXPIRE_MINUTES.
 
     After too many wrong passwords for an email, that email is blocked until the oldest
     failures fall out of the window, even if the right password is sent.
@@ -56,7 +63,7 @@ def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], request: Reques
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Veli onayı alınmadan giriş yapılamaz. Lütfen koçunuzla iletişime geçin.",
         )
-    return Token(access_token=create_access_token(user.id, user.role.value))
+    return Token(access_token=create_access_token(user.id, user.role.value, remember=remember_me))
 
 
 @router.get("/me", response_model=UserOut)
@@ -74,10 +81,13 @@ def accept_privacy_notice(user: CurrentUser, db: DbSession) -> User:
 
 
 @router.post("/change-password", response_model=Token)
-def change_password(payload: PasswordChange, user: CurrentUser, db: DbSession) -> Token:
-    """Change your own password. Returns a new token; every older token stops working."""
+def change_password(payload: PasswordChange, user: CurrentUser, token: TokenPayload, db: DbSession) -> Token:
+    """Change your own password. Returns a new token; every older token stops working.
+
+    The new token lasts as long as the one it replaces: a remembered session stays remembered.
+    """
     if not verify_password(payload.current_password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mevcut şifre hatalı")
     set_password(user, payload.new_password)
     db.commit()
-    return Token(access_token=create_access_token(user.id, user.role.value))
+    return Token(access_token=create_access_token(user.id, user.role.value, remember=token.get("remember") is True))

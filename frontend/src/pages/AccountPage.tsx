@@ -57,10 +57,13 @@ export default function AccountPage() {
 
       <form onSubmit={handleSubmit} className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-lg font-semibold text-slate-900">Şifre değiştir</h2>
+        {/* Not shown: tells password managers which saved login this change belongs to. */}
+        <input type="email" name="username" autoComplete="username" value={user?.email ?? ''} readOnly hidden />
         <label className="mt-3 block text-sm font-medium text-slate-700">
           Mevcut şifre
           <input
             type="password"
+            name="current-password"
             required
             autoComplete="current-password"
             value={current}
@@ -73,9 +76,10 @@ export default function AccountPage() {
           <input
             type="password"
             required
-            minLength={8}
+            name="new-password"
+            minLength={6}
             autoComplete="new-password"
-            placeholder="En az 8 karakter"
+            placeholder="En az 6 karakter"
             value={next}
             onChange={(e) => setNext(e.target.value)}
             className={inputClass}
@@ -86,7 +90,8 @@ export default function AccountPage() {
           <input
             type="password"
             required
-            minLength={8}
+            name="new-password-repeat"
+            minLength={6}
             autoComplete="new-password"
             value={repeat}
             onChange={(e) => setRepeat(e.target.value)}
