@@ -4,6 +4,7 @@
     {
       "code": "turkce",
       "name": "Türkçe",
+      "short_name": "Türkçe",
       "question_count": 20,
       "session": "sozel",
       "topics": [
@@ -25,6 +26,7 @@
     {
       "code": "inkilap",
       "name": "T.C. İnkılap Tarihi ve Atatürkçülük",
+      "short_name": "İnkılap",
       "question_count": 10,
       "session": "sozel",
       "topics": [
@@ -40,6 +42,7 @@
     {
       "code": "din",
       "name": "Din Kültürü ve Ahlak Bilgisi",
+      "short_name": "Din",
       "question_count": 10,
       "session": "sozel",
       "topics": [
@@ -53,6 +56,7 @@
     {
       "code": "ingilizce",
       "name": "İngilizce",
+      "short_name": "İngilizce",
       "question_count": 10,
       "session": "sozel",
       "topics": [
@@ -71,6 +75,7 @@
     {
       "code": "matematik",
       "name": "Matematik",
+      "short_name": "Mat",
       "question_count": 20,
       "session": "sayisal",
       "topics": [
@@ -91,6 +96,7 @@
     {
       "code": "fen",
       "name": "Fen Bilimleri",
+      "short_name": "Fen",
       "question_count": 20,
       "session": "sayisal",
       "topics": [

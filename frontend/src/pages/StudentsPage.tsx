@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { createStudent, errorMessage, fetchStudents, updateStudent, type Student, type StudentInput } from '../api'
 import AccountFields, { inputClass, labelClass, StatusBadge } from '../components/AccountFields'
 import DashboardLayout from '../components/DashboardLayout'
@@ -162,7 +163,11 @@ export default function StudentsPage() {
           <tbody className="divide-y divide-slate-100">
             {students?.map((student) => (
               <tr key={student.id} className={student.is_active ? 'hover:bg-slate-50' : 'bg-slate-50 text-slate-400'}>
-                <td className="px-4 py-2 font-medium">{student.full_name}</td>
+                <td className="px-4 py-2 font-medium">
+                  <Link to={`/admin/students/${student.id}`} className="text-indigo-700 hover:underline">
+                    {student.full_name}
+                  </Link>
+                </td>
                 <td className="px-4 py-2">{student.email}</td>
                 <td className="px-4 py-2">{student.school ?? '—'}</td>
                 <td className="px-4 py-2">{student.class_name ?? '—'}</td>

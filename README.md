@@ -20,7 +20,7 @@ cd backend
 pip install -r requirements.txt
 cp .env.example .env          # then set JWT_SECRET and ADMIN_PASSWORD
 alembic upgrade head
-python -m app.seed --demo     # subjects, topics + admin; --demo adds students and a parent
+python -m app.seed --demo     # subjects, topics + admin; --demo adds students, a parent and 4 exams
 uvicorn app.main:app --reload
 ```
 
@@ -49,9 +49,15 @@ Under "Öğrenciler" the admin adds and edits students (name, email, password, s
 deactivates them. A deactivated student cannot log in and is no longer offered for result entry,
 but keeps their exam results. Under "Veliler" the admin adds parents and links them to students.
 
+## Student analytics
+
+Clicking a student's name opens their detail page: the last exam against the one before it,
+net trend over exams (total and per subject), most frequent wrong topics, and the student's
+average per subject next to the average of all students who took the same exams.
+
 ## Subjects and topics
 
-`backend/seed/lgs_topics_seed.json` is the only source for subjects and topics. After editing it,
+`backend/seed/lgs_topics_seed.json` is the only source for subjects (including `short_name` and `session`) and topics. After editing it,
 run `python -m app.seed`. Topics removed from the file are deleted from the database, except
 those already used in recorded exam mistakes, which are kept and reported.
 

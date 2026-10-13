@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { StudentResults, Subject } from '../api'
 import { formatNet } from '../format'
 
@@ -20,8 +21,8 @@ export default function ResultsTable({ subjects, students, onEdit, onDelete }: P
               Öğrenci
             </th>
             {subjects.map((subject) => (
-              <th key={subject.id} colSpan={4} className="border-l border-slate-200 px-2 py-2 text-center font-medium whitespace-normal">
-                {subject.name}
+              <th key={subject.id} colSpan={4} className="border-l border-slate-200 px-2 py-2 text-center font-medium">
+                {subject.short_name}
               </th>
             ))}
             <th rowSpan={2} className="border-l border-slate-200 px-3 py-2 text-right font-medium">
@@ -51,7 +52,11 @@ export default function ResultsTable({ subjects, students, onEdit, onDelete }: P
             const mistakes = student.results.flatMap((r) => r.mistake_topic_ids.map((id) => topicNames.get(id) ?? ''))
             return (
               <tr key={student.student_id} className="hover:bg-slate-50">
-                <td className="px-3 py-2 font-medium text-slate-900">{student.full_name}</td>
+                <td className="px-3 py-2 font-medium">
+                  <Link to={`/admin/students/${student.student_id}`} className="text-indigo-700 hover:underline">
+                    {student.full_name}
+                  </Link>
+                </td>
                 {subjects.map((subject) => {
                   const result = bySubject.get(subject.id)
                   return [

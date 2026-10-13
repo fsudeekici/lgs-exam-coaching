@@ -16,6 +16,8 @@ class SubjectOut(BaseModel):
     id: int
     code: str
     name: str
+    short_name: str
+    session: str
     question_count: int
     topics: list[TopicOut]
 
