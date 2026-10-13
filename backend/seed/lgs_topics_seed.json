@@ -1,0 +1,107 @@
+{
+  "version": "LGS 2027 - 8. sınıf müfredatı (ünite/konu düzeyi)",
+  "subjects": [
+    {
+      "code": "turkce",
+      "name": "Türkçe",
+      "question_count": 20,
+      "session": "sozel",
+      "topics": [
+        "Sözcükte Anlam",
+        "Cümlede Anlam",
+        "Paragrafta Anlam",
+        "Söz Sanatları",
+        "Fiilimsiler",
+        "Cümlenin Ögeleri",
+        "Fiilde Çatı",
+        "Cümle Türleri",
+        "Yazım Kuralları",
+        "Noktalama İşaretleri",
+        "Anlatım Bozuklukları",
+        "Metin Türleri",
+        "Sözel Mantık ve Görsel Okuma"
+      ]
+    },
+    {
+      "code": "inkilap",
+      "name": "T.C. İnkılap Tarihi ve Atatürkçülük",
+      "question_count": 10,
+      "session": "sozel",
+      "topics": [
+        "Bir Kahraman Doğuyor",
+        "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar",
+        "Millî Bir Destan: Ya İstiklal Ya Ölüm!",
+        "Atatürkçülük ve Çağdaşlaşan Türkiye",
+        "Demokratikleşme Çabaları",
+        "Atatürk Dönemi Türk Dış Politikası",
+        "Atatürk'ün Ölümü ve Sonrası"
+      ]
+    },
+    {
+      "code": "din",
+      "name": "Din Kültürü ve Ahlak Bilgisi",
+      "question_count": 10,
+      "session": "sozel",
+      "topics": [
+        "Kader İnancı",
+        "Zekât ve Sadaka",
+        "Din ve Hayat",
+        "Hz. Muhammed'in Örnekliği",
+        "Kur'an-ı Kerim ve Özellikleri"
+      ]
+    },
+    {
+      "code": "ingilizce",
+      "name": "İngilizce",
+      "question_count": 10,
+      "session": "sozel",
+      "topics": [
+        "Friendship",
+        "Teen Life",
+        "In the Kitchen",
+        "On the Phone",
+        "The Internet",
+        "Adventures",
+        "Tourism",
+        "Chores",
+        "Science",
+        "Natural Forces"
+      ]
+    },
+    {
+      "code": "matematik",
+      "name": "Matematik",
+      "question_count": 20,
+      "session": "sayisal",
+      "topics": [
+        "Çarpanlar ve Katlar",
+        "Üslü İfadeler",
+        "Kareköklü İfadeler",
+        "Veri Analizi",
+        "Basit Olayların Olma Olasılığı",
+        "Cebirsel İfadeler ve Özdeşlikler",
+        "Doğrusal Denklemler",
+        "Eşitsizlikler",
+        "Üçgenler",
+        "Eşlik ve Benzerlik",
+        "Dönüşüm Geometrisi",
+        "Geometrik Cisimler"
+      ]
+    },
+    {
+      "code": "fen",
+      "name": "Fen Bilimleri",
+      "question_count": 20,
+      "session": "sayisal",
+      "topics": [
+        "Mevsimler ve İklim",
+        "DNA ve Genetik Kod",
+        "Basınç",
+        "Madde ve Endüstri",
+        "Basit Makineler",
+        "Enerji Dönüşümleri ve Çevre Bilimi",
+        "Elektrik Yükleri ve Elektrik Enerjisi"
+      ]
+    }
+  ]
+}

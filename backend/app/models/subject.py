@@ -13,7 +13,9 @@ class Subject(Base):
     question_count: Mapped[int]
     display_order: Mapped[int]
 
-    topics: Mapped[list["Topic"]] = relationship(back_populates="subject", cascade="all, delete-orphan")
+    topics: Mapped[list["Topic"]] = relationship(
+        back_populates="subject", cascade="all, delete-orphan", order_by="Topic.id"
+    )
 
 
 class Topic(Base):

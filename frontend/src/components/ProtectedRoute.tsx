@@ -6,7 +6,7 @@ import { useAuth } from '../auth/useAuth'
 export default function ProtectedRoute({ role }: { role: Role }) {
   const { user, loading } = useAuth()
 
-  if (loading) return <p className="p-8 text-slate-500">Loading…</p>
+  if (loading) return <p className="p-8 text-slate-500">Yükleniyor…</p>
   if (!user) return <Navigate to="/login" replace />
   // Wrong role: send them to their own dashboard.
   if (user.role !== role) return <Navigate to={`/${user.role}`} replace />

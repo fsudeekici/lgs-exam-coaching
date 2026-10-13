@@ -1,7 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
-import AdminDashboard from './pages/AdminDashboard'
+import ExamDetailPage from './pages/ExamDetailPage'
+import ExamsPage from './pages/ExamsPage'
 import LoginPage from './pages/LoginPage'
 import ParentDashboard from './pages/ParentDashboard'
 import StudentDashboard from './pages/StudentDashboard'
@@ -13,7 +14,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute role="admin" />}>
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin" element={<ExamsPage />} />
+            <Route path="/admin/exams/:examId" element={<ExamDetailPage />} />
           </Route>
           <Route element={<ProtectedRoute role="student" />}>
             <Route path="/student" element={<StudentDashboard />} />

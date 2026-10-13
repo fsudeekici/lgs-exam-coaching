@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { ApiError } from '../api'
+import { errorMessage } from '../api'
 import { useAuth } from '../auth/useAuth'
 
 export default function LoginPage() {
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  if (loading) return <p className="p-8 text-slate-500">Loading…</p>
+  if (loading) return <p className="p-8 text-slate-500">Yükleniyor…</p>
   if (user) return <Navigate to={`/${user.role}`} replace />
 
   const handleSubmit = async (event: FormEvent) => {
@@ -22,7 +22,7 @@ export default function LoginPage() {
       const me = await login(email, password)
       navigate(`/${me.role}`, { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not reach the server')
+      setError(errorMessage(err))
       setSubmitting(false)
     }
   }
@@ -33,11 +33,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">LGS Exam Coaching</h1>
-        <p className="mt-1 text-sm text-slate-500">Sign in to your account</p>
+        <h1 className="text-xl font-semibold text-slate-900">LGS Koçluk</h1>
+        <p className="mt-1 text-sm text-slate-500">Hesabınıza giriş yapın</p>
 
         <label className="mt-6 block text-sm font-medium text-slate-700">
-          Email
+          E-posta
           <input
             type="email"
             autoComplete="username"
@@ -49,7 +49,7 @@ export default function LoginPage() {
         </label>
 
         <label className="mt-4 block text-sm font-medium text-slate-700">
-          Password
+          Şifre
           <input
             type="password"
             autoComplete="current-password"
@@ -71,7 +71,7 @@ export default function LoginPage() {
           disabled={submitting}
           className="mt-6 w-full rounded-md bg-indigo-600 px-3 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
         >
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {submitting ? 'Giriş yapılıyor…' : 'Giriş yap'}
         </button>
       </form>
     </div>
