@@ -21,6 +21,7 @@ from app.models import (
     Exam,
     ExamResult,
     ExamTopicMistake,
+    MeetingNote,
     QuestionLog,
     Role,
     Subject,
@@ -130,6 +131,13 @@ DEMO_NOTES = [
 ]
 
 
+# (days ago, note)
+DEMO_MEETING_NOTES = [
+    (40, "İlk görüşme. Haftalık çalışma programı ve günlük soru hedefi (en az 60 soru) birlikte belirlendi."),
+    (12, "Netlerdeki artış konuşuldu. Fen ve matematikte tekrar gereken konular için hafta sonu çalışması planlandı."),
+]
+
+
 def seed_demo_study(db: Session, students: list[User]) -> None:
     """Give each student 30 days of question logs and a topic progress list.
 
@@ -187,6 +195,14 @@ def seed_demo_notes(db: Session, student: User) -> None:
     print(f"Created demo coach notes: {student.email}")
 
 
+def seed_demo_meeting_notes(db: Session, student: User) -> None:
+    if db.scalar(select(MeetingNote.id).where(MeetingNote.student_id == student.id).limit(1)) is not None:
+        return
+    for days_ago, body in DEMO_MEETING_NOTES:
+        db.add(MeetingNote(student_id=student.id, meeting_date=date.today() - timedelta(days=days_ago), body=body))
+    print(f"Created demo meeting notes: {student.email}")
+
+
 def main() -> None:
     with SessionLocal() as db:
         seed_subjects(db)
@@ -212,6 +228,7 @@ def main() -> None:
             seed_demo_study(db, students)
             # The demo parent is linked to this student, so the parent panel shows a note.
             seed_demo_notes(db, students[0])
+            seed_demo_meeting_notes(db, students[0])
 
         db.commit()
     print("Seed complete")

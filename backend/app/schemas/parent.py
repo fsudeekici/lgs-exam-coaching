@@ -45,15 +45,15 @@ class DayQuestions(BaseModel):
     wrong: int
 
 
-class WeekSummary(BaseModel):
-    """Questions solved over the last 7 days, today included."""
+class QuestionsSummary(BaseModel):
+    """Questions solved over the last few days, today included."""
 
     solved: int
     correct: int
     wrong: int
     # Days with at least one entry.
     active_days: int
-    # All 7 days, oldest first; days without entries are zero.
+    # Every day of the period, oldest first; days without entries are zero.
     days: list[DayQuestions]
 
 
@@ -61,6 +61,7 @@ class ChildSummary(BaseModel):
     """What a parent sees for one of their children."""
 
     analytics: StudentAnalytics
-    week: WeekSummary
+    # The last 7 days.
+    week: QuestionsSummary
     # Only notes the coach marked as visible to parents, newest first.
     notes: list[ParentNote]

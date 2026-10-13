@@ -4,7 +4,8 @@ import type { Role } from '../api'
 import { useAuth } from '../auth/useAuth'
 
 const ADMIN_NAV = [
-  { to: '/admin', label: 'Denemeler' },
+  { to: '/admin', label: 'Genel bakış' },
+  { to: '/admin/exams', label: 'Denemeler' },
   { to: '/admin/students', label: 'Öğrenciler' },
   { to: '/admin/parents', label: 'Veliler' },
 ]

@@ -6,13 +6,15 @@ interface StatusMeta {
   /** Badge and selected-button colours. The label always accompanies the colour. */
   badge: string
   selected: string
+  /** Solid fill for a segment of a progress bar. */
+  bar: string
 }
 
 export const TOPIC_STATUSES: StatusMeta[] = [
-  { value: 'not_started', label: 'Başlamadım', badge: 'bg-slate-100 text-slate-700', selected: 'border-slate-700 bg-slate-700 text-white' },
-  { value: 'studying', label: 'Çalışıyorum', badge: 'bg-blue-50 text-blue-800', selected: 'border-blue-700 bg-blue-700 text-white' },
-  { value: 'done', label: 'Bitti', badge: 'bg-green-50 text-green-800', selected: 'border-green-700 bg-green-700 text-white' },
-  { value: 'needs_review', label: 'Tekrar gerekli', badge: 'bg-amber-50 text-amber-900', selected: 'border-amber-700 bg-amber-700 text-white' },
+  { value: 'not_started', label: 'Başlamadım', badge: 'bg-slate-100 text-slate-700', selected: 'border-slate-700 bg-slate-700 text-white', bar: 'bg-slate-300' },
+  { value: 'studying', label: 'Çalışıyorum', badge: 'bg-blue-50 text-blue-800', selected: 'border-blue-700 bg-blue-700 text-white', bar: 'bg-blue-600' },
+  { value: 'done', label: 'Bitti', badge: 'bg-green-50 text-green-800', selected: 'border-green-700 bg-green-700 text-white', bar: 'bg-green-600' },
+  { value: 'needs_review', label: 'Tekrar gerekli', badge: 'bg-amber-50 text-amber-900', selected: 'border-amber-700 bg-amber-700 text-white', bar: 'bg-amber-500' },
 ]
 
 export const STATUS_BY_VALUE = new Map(TOPIC_STATUSES.map((s) => [s.value, s]))

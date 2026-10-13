@@ -134,13 +134,21 @@ export function AverageComparisonChart({ rows, height }: { rows: AverageRow[]; h
   )
 }
 
-/** Questions solved per day over one week. */
-export function WeekQuestionsChart({ days, height }: { days: DayQuestions[]; height: number }) {
+/** Questions solved per day. `axis` picks the day labels: weekday names for a week, dates for longer periods. */
+export function DailyQuestionsChart({ days, height, axis }: { days: DayQuestions[]; height: number; axis: 'weekday' | 'date' }) {
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={days} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+      <BarChart data={days} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barCategoryGap={axis === 'date' ? 2 : '10%'}>
         <CartesianGrid stroke={GRID} vertical={false} />
-        <XAxis dataKey="day" tickFormatter={formatWeekday} tick={TICK} tickLine={false} axisLine={{ stroke: AXIS }} interval={0} />
+        <XAxis
+          dataKey="day"
+          tickFormatter={axis === 'weekday' ? formatWeekday : formatShortDate}
+          tick={TICK}
+          tickLine={false}
+          axisLine={{ stroke: AXIS }}
+          interval={axis === 'weekday' ? 0 : 'preserveStartEnd'}
+          minTickGap={16}
+        />
         <YAxis allowDecimals={false} tick={TICK} tickLine={false} axisLine={false} width={32} />
         <Tooltip
           contentStyle={tooltipProps.contentStyle}

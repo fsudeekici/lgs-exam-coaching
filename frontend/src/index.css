@@ -1,1 +1,13 @@
 @import 'tailwindcss';
+
+@page {
+  margin: 12mm;
+}
+
+@media print {
+  /* Keep chart, bar and badge colours on paper. */
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

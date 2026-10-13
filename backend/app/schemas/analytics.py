@@ -60,9 +60,12 @@ class Comparison(BaseModel):
 
 
 class WeakTopic(BaseModel):
+    """A topic marked wrong in at least 2 of the student's last 3 exams."""
+
     topic_id: int
     name: str
     subject_id: int
+    # How many of those exams missed it.
     count: int
 
 
@@ -79,5 +82,6 @@ class StudentAnalytics(BaseModel):
     # Oldest exam first.
     exams: list[ExamPoint]
     comparison: Comparison | None
+    # Most missed first.
     weak_topics: list[WeakTopic]
     averages: list[SubjectAverage]

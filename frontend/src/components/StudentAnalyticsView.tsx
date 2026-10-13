@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { ExamPoint, NetChange, StudentAnalytics } from '../api'
-import { formatChange, formatDate, formatNet } from '../format'
+import { formatDate, formatNet } from '../format'
 import { AverageComparisonChart, NetTrendChart } from './charts'
+import Delta from './Delta'
 
 const TOTAL_QUESTIONS = 90
 
@@ -133,28 +134,9 @@ export default function StudentAnalyticsView({ data, examLinks }: Props) {
       </Section>
 
       <div className="grid gap-x-6 lg:grid-cols-2">
-        <Section title="Zayıf konular" note="Denemelerde en sık yanlış yapılan konular.">
+        <Section title="Zayıf konular" note="Son 3 denemenin en az 2’sinde yanlış yapılan konular.">
           <Card>
-            {weakTopics.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-500">Bu öğrenci için yanlış konu işaretlenmedi.</p>
-            ) : (
-              <ol className="space-y-3">
-                {weakTopics.map((topic) => (
-                  <li key={topic.topic_id}>
-                    <div className="flex items-baseline justify-between gap-3 text-sm">
-                      <span className="text-slate-900">
-                        {topic.name}{' '}
-                        <span className="text-slate-400">· {subjectById.get(topic.subject_id)?.short_name}</span>
-                      </span>
-                      <span className="shrink-0 font-semibold tabular-nums text-slate-900">
-                        {topic.count} <span className="font-normal text-slate-500">kez</span>
-                      </span>
-                    </div>
-                    <div className="mt-1 h-2 rounded-r bg-[#2a78d6]" style={{ width: `${(topic.count / weakTopics[0].count) * 100}%` }} />
-                  </li>
-                ))}
-              </ol>
-            )}
+            <WeakTopicList topics={weakTopics} subjectName={(id) => subjectById.get(id)?.short_name} />
           </Card>
         </Section>
 
@@ -203,26 +185,46 @@ export default function StudentAnalyticsView({ data, examLinks }: Props) {
 export function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-      {note && <p className="mt-0.5 text-sm text-slate-500">{note}</p>}
+      {/* On paper, a heading stays with the content below it. */}
+      <h2 className="break-after-avoid text-lg font-semibold text-slate-900">{title}</h2>
+      {note && <p className="mt-0.5 break-after-avoid text-sm text-slate-500">{note}</p>}
       <div className="mt-3">{children}</div>
     </section>
   )
 }
 
-export function Card({ children }: { children: ReactNode }) {
-  return <div className="rounded-lg border border-slate-200 bg-white p-4">{children}</div>
+interface WeakTopicListProps {
+  /** Most frequent first. */
+  topics: StudentAnalytics['weak_topics']
+  subjectName: (subjectId: number) => string | undefined
 }
 
-/** Signed change with an arrow, so direction never depends on colour alone. */
-export function Delta({ change }: { change: number | null }) {
-  if (change === null) return <span className="text-slate-400">—</span>
-  if (change === 0) return <span className="tabular-nums text-slate-500">= değişmedi</span>
+/** The student's weak topics, with a bar for how many of the last exams missed each. */
+export function WeakTopicList({ topics, subjectName }: WeakTopicListProps) {
+  if (topics.length === 0) {
+    return <p className="py-6 text-center text-sm text-slate-500">Son 3 denemede tekrar eden yanlış konu yok.</p>
+  }
   return (
-    <span className={`font-medium tabular-nums ${change > 0 ? 'text-green-800' : 'text-red-700'}`}>
-      {change > 0 ? '▲' : '▼'} {formatChange(change)}
-    </span>
+    <ol className="space-y-3">
+      {topics.map((topic) => (
+        <li key={topic.topic_id}>
+          <div className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="text-slate-900">
+              {topic.name} <span className="text-slate-400">· {subjectName(topic.subject_id)}</span>
+            </span>
+            <span className="shrink-0 font-semibold tabular-nums text-slate-900">
+              {topic.count} <span className="font-normal text-slate-500">denemede</span>
+            </span>
+          </div>
+          <div className="mt-1 h-2 rounded-r bg-[#2a78d6]" style={{ width: `${(topic.count / topics[0].count) * 100}%` }} />
+        </li>
+      ))}
+    </ol>
   )
+}
+
+export function Card({ children }: { children: ReactNode }) {
+  return <div className="break-inside-avoid rounded-lg border border-slate-200 bg-white p-4">{children}</div>
 }
 
 function ChangeTile({ label, change, max, emphasized }: { label: string; change: NetChange; max: number; emphasized?: boolean }) {
