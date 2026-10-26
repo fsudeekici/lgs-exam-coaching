@@ -177,6 +177,17 @@ docker compose -f docker-compose.prod.yml ps
 docker compose -f docker-compose.prod.yml logs -f backend
 ```
 
+### Looking at the database (DBeaver)
+
+The database port is only open on the server itself (`127.0.0.1:5432`, or `DB_PORT` in `.env`),
+never to the internet. Do not add a firewall or Oracle security list rule for it. Connect
+through an SSH tunnel instead. In DBeaver:
+
+1. New connection → PostgreSQL. Host `localhost`, port `5432`, database, user and password
+   from `POSTGRES_DB`, `POSTGRES_USER` and `POSTGRES_PASSWORD` in the server's `.env`.
+2. On the SSH tab tick "Use SSH Tunnel": the server's IP, port 22, your SSH user and private key.
+3. To only look, tick "Read-only connection": changes made in DBeaver go straight to live data.
+
 ### HTTPS
 
 nginx in this stack serves plain HTTP on `HTTP_PORT`. **Do not expose it to the internet

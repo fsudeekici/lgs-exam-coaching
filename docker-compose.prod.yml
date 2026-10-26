@@ -11,6 +11,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    # Only reachable from the server itself, e.g. DBeaver over an SSH tunnel. Never open it publicly.
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -36,7 +39,7 @@ services:
       db:
         condition: service_healthy
 
-  # nginx: serves the built frontend and passes /api to the backend. The only published port.
+  # nginx: serves the built frontend and passes /api to the backend. The only port open to the outside.
   frontend:
     build: ./frontend
     restart: unless-stopped
