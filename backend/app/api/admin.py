@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import DbSession, require_role
+from app.api.admin_users import get_user_or_404
+from app.api.deps import CurrentAdmin, DbSession, require_admin
 from app.models import Exam, ExamResult, ExamTopicMistake, Role, Subject, User
 from app.schemas.exam import (
     ExamCreate,
@@ -16,9 +17,11 @@ from app.schemas.exam import (
     StudentResultsOut,
     SubjectOut,
 )
+from app.services.coaching import students_of
 from app.services.scoring import exact_net, round_net
 
-router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_role(Role.admin))])
+# Exams are shared by all admins; each admin only sees and enters results for their own students.
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 
 def invalid(detail: str) -> HTTPException:
@@ -32,20 +35,15 @@ def get_exam_or_404(db: DbSession, exam_id: int) -> Exam:
     return exam
 
 
-def get_student_or_404(db: DbSession, student_id: int) -> User:
-    student = db.get(User, student_id)
-    if student is None or student.role != Role.student:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Öğrenci bulunamadı")
-    return student
-
-
-def load_student_results(db: DbSession, exam_id: int, student_id: int | None = None) -> list[StudentResultsOut]:
-    """Results of an exam grouped per student, ordered by student name."""
+def load_student_results(
+    db: DbSession, admin: User, exam_id: int, student_id: int | None = None
+) -> list[StudentResultsOut]:
+    """Results of an exam grouped per student (the admin's own students only), ordered by student name."""
     query = (
         select(ExamResult, User.full_name)
         .join(User, User.id == ExamResult.student_id)
         .join(Subject, Subject.id == ExamResult.subject_id)
-        .where(ExamResult.exam_id == exam_id)
+        .where(ExamResult.exam_id == exam_id, students_of(admin))
         .options(selectinload(ExamResult.topic_mistakes))
         .order_by(User.full_name, User.id, Subject.display_order)
     )
@@ -80,10 +78,17 @@ def list_subjects(db: DbSession):
 
 
 @router.get("/exams", response_model=list[ExamOut])
-def list_exams(db: DbSession):
+def list_exams(db: DbSession, admin: CurrentAdmin):
+    """Every exam; `student_count` only counts the admin's own students."""
+    own_results = (
+        select(ExamResult.exam_id, ExamResult.student_id)
+        .join(User, User.id == ExamResult.student_id)
+        .where(students_of(admin))
+        .subquery()
+    )
     rows = db.execute(
-        select(Exam, func.count(func.distinct(ExamResult.student_id)))
-        .outerjoin(ExamResult, ExamResult.exam_id == Exam.id)
+        select(Exam, func.count(func.distinct(own_results.c.student_id)))
+        .outerjoin(own_results, own_results.c.exam_id == Exam.id)
         .group_by(Exam.id)
         .order_by(Exam.exam_date.desc(), Exam.id.desc())
     )
@@ -102,9 +107,9 @@ def create_exam(payload: ExamCreate, db: DbSession):
 
 
 @router.get("/exams/{exam_id}", response_model=ExamDetail)
-def get_exam(exam_id: int, db: DbSession):
+def get_exam(exam_id: int, db: DbSession, admin: CurrentAdmin):
     exam = get_exam_or_404(db, exam_id)
-    students = load_student_results(db, exam_id)
+    students = load_student_results(db, admin, exam_id)
     return ExamDetail(
         id=exam.id,
         name=exam.name,
@@ -116,10 +121,12 @@ def get_exam(exam_id: int, db: DbSession):
 
 
 @router.put("/exams/{exam_id}/students/{student_id}/results", response_model=StudentResultsOut)
-def save_student_results(exam_id: int, student_id: int, payload: StudentResultsIn, db: DbSession):
+def save_student_results(
+    exam_id: int, student_id: int, payload: StudentResultsIn, db: DbSession, admin: CurrentAdmin
+):
     """Save one student's results for all subjects of an exam, replacing any earlier entry."""
     get_exam_or_404(db, exam_id)
-    get_student_or_404(db, student_id)
+    get_user_or_404(db, admin, student_id, Role.student)
 
     subjects = {s.id: s for s in db.scalars(select(Subject).options(selectinload(Subject.topics)))}
     submitted_ids = [r.subject_id for r in payload.results]
@@ -153,11 +160,12 @@ def save_student_results(exam_id: int, student_id: int, payload: StudentResultsI
             )
         )
     db.commit()
-    return load_student_results(db, exam_id, student_id)[0]
+    return load_student_results(db, admin, exam_id, student_id)[0]
 
 
 @router.delete("/exams/{exam_id}/students/{student_id}/results", status_code=status.HTTP_204_NO_CONTENT)
-def delete_student_results(exam_id: int, student_id: int, db: DbSession) -> None:
+def delete_student_results(exam_id: int, student_id: int, db: DbSession, admin: CurrentAdmin) -> None:
+    get_user_or_404(db, admin, student_id, Role.student)
     results = db.scalars(
         select(ExamResult).where(ExamResult.exam_id == exam_id, ExamResult.student_id == student_id)
     ).all()

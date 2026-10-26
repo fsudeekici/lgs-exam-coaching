@@ -81,6 +81,14 @@ weak topics, and questions solved in the last 7 days.
 On the student detail page the admin writes coach notes and chooses per note whether the
 parent can see it. Parents see only the visible ones.
 
+## Multiple admins
+
+The admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` is the main admin. Under "Yöneticiler" they add
+more admins (coaches), edit them and deactivate them. Each coach only sees the students they
+added themselves and those students' parents; exams are shared, but a coach only sees and enters
+results for their own students. The main admin sees every student and parent. When upgrading,
+existing students and parents are given to the existing admin.
+
 ## Admin overview and parent meetings
 
 The admin's home page ("Genel bakış") lists every active student with their last exam net, the

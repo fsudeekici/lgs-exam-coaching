@@ -1,18 +1,17 @@
 from datetime import date, timedelta
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 
 from app.api.admin_analytics import build_student_analytics
 from app.api.admin_users import get_user_or_404
-from app.api.deps import DbSession, require_role
+from app.api.deps import CurrentAdmin, DbSession, require_admin
 from app.api.parent import questions_summary, visible_notes
 from app.models import MeetingNote, QuestionLog, Role, Subject, Topic, TopicProgress, TopicStatus, User
 from app.schemas.meeting import MeetingNoteIn, MeetingNoteOut, MeetingPage, SubjectProgress, SubjectQuestions
+from app.services.coaching import can_see
 
 # The page the coach shows (or prints) at a parent meeting, and the notes taken afterwards.
-router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_role(Role.admin))])
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 MEETING_DAYS = 30
 
@@ -77,8 +76,8 @@ def topic_progress_by_subject(db: DbSession, student_id: int) -> list[SubjectPro
 
 
 @router.get("/students/{student_id}/meeting", response_model=MeetingPage)
-def meeting_page(student_id: int, db: DbSession):
-    student = get_user_or_404(db, student_id, Role.student)
+def meeting_page(student_id: int, db: DbSession, admin: CurrentAdmin):
+    student = get_user_or_404(db, admin, student_id, Role.student)
     return MeetingPage(
         analytics=build_student_analytics(db, student),
         questions=questions_summary(db, student.id, MEETING_DAYS),
@@ -99,10 +98,10 @@ def meeting_page(student_id: int, db: DbSession):
 def add_meeting_note(
     student_id: int,
     payload: MeetingNoteIn,
-    admin: Annotated[User, Depends(require_role(Role.admin))],
+    admin: CurrentAdmin,
     db: DbSession,
 ):
-    get_user_or_404(db, student_id, Role.student)
+    get_user_or_404(db, admin, student_id, Role.student)
     note = MeetingNote(student_id=student_id, author_id=admin.id, **payload.model_dump())
     db.add(note)
     db.commit()
@@ -110,9 +109,9 @@ def add_meeting_note(
 
 
 @router.delete("/meeting-notes/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_meeting_note(note_id: int, db: DbSession) -> None:
+def delete_meeting_note(note_id: int, db: DbSession, admin: CurrentAdmin) -> None:
     note = db.get(MeetingNote, note_id)
-    if note is None:
+    if note is None or not can_see(admin, db.get(User, note.student_id)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not bulunamadı")
     db.delete(note)
     db.commit()

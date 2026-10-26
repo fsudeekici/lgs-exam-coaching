@@ -18,6 +18,8 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     role: Role
+    # The main admin, who manages the other admins and sees every student.
+    is_superadmin: bool
     # Empty until the user accepts the KVKK privacy notice.
     kvkk_consent_at: datetime | None
 

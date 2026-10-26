@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 
 from app.api.admin_users import get_user_or_404
-from app.api.deps import DbSession, require_role
+from app.api.deps import CurrentAdmin, DbSession, require_admin
 from app.models import Exam, ExamResult, Role, Subject, User
 from app.schemas.analytics import (
     Comparison,
@@ -20,7 +20,7 @@ from app.schemas.analytics import (
 from app.services.scoring import exact_net, round_net
 from app.services.weak_topics import find_weak_topics
 
-router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_role(Role.admin))])
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 
 def net_change(last: Fraction, previous: Fraction | None) -> dict:
@@ -103,5 +103,5 @@ def build_student_analytics(db: DbSession, student: User) -> StudentAnalytics:
 
 
 @router.get("/students/{student_id}/analytics", response_model=StudentAnalytics)
-def student_analytics(student_id: int, db: DbSession):
-    return build_student_analytics(db, get_user_or_404(db, student_id, Role.student))
+def student_analytics(student_id: int, db: DbSession, admin: CurrentAdmin):
+    return build_student_analytics(db, get_user_or_404(db, admin, student_id, Role.student))
