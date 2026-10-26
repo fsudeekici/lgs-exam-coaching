@@ -88,8 +88,8 @@ def auth(user: User) -> dict[str, str]:
 
 @pytest.fixture
 def admin() -> dict[str, str]:
-    """Auth headers for an admin."""
-    return auth(make_user(Role.admin, "admin@test.dev", "Admin"))
+    """Auth headers for the main admin, who sees every student."""
+    return auth(make_user(Role.admin, "admin@test.dev", "Admin", is_superadmin=True))
 
 
 @pytest.fixture

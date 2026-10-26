@@ -4,7 +4,7 @@ import { useAuth } from '../auth/useAuth'
 import ConsentPage from '../pages/ConsentPage'
 
 /** Renders child routes only for a logged-in user; with `role`, only for that role. */
-export default function ProtectedRoute({ role }: { role?: Role }) {
+export default function ProtectedRoute({ role, superadmin }: { role?: Role; superadmin?: boolean }) {
   const { user, loading } = useAuth()
 
   if (loading) return <p className="p-8 text-slate-500">Yükleniyor…</p>
@@ -13,5 +13,6 @@ export default function ProtectedRoute({ role }: { role?: Role }) {
   if (!user.kvkk_consent_at) return <ConsentPage />
   // Wrong role: send them to their own dashboard.
   if (role && user.role !== role) return <Navigate to={`/${user.role}`} replace />
+  if (superadmin && !user.is_superadmin) return <Navigate to={`/${user.role}`} replace />
   return <Outlet />
 }

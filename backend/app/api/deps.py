@@ -65,3 +65,14 @@ def require_role(*roles: Role) -> Callable[[User], User]:
         return user
 
     return checker
+
+
+require_admin = require_role(Role.admin)
+CurrentAdmin = Annotated[User, Depends(require_admin)]
+
+
+def require_superadmin(admin: CurrentAdmin) -> User:
+    """Only the main admin may manage the other admins."""
+    if not admin.is_superadmin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Bu işlem yalnızca ana yönetici içindir")
+    return admin

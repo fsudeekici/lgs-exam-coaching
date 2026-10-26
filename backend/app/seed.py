@@ -1,6 +1,6 @@
 """Seed reference data. Safe to run repeatedly.
 
-    python -m app.seed          # LGS subjects and topics + admin account from ADMIN_EMAIL / ADMIN_PASSWORD
+    python -m app.seed          # LGS subjects and topics + main admin account from ADMIN_EMAIL / ADMIN_PASSWORD
     python -m app.seed --demo   # also demo students, a parent, 4 exams, 30 days of study data and coach notes (local development only)
 """
 
@@ -208,7 +208,9 @@ def main() -> None:
         seed_subjects(db)
 
         if settings.admin_password:
-            get_or_create_user(db, settings.admin_email.lower(), "Admin", settings.admin_password, Role.admin)
+            admin = get_or_create_user(db, settings.admin_email.lower(), "Admin", settings.admin_password, Role.admin)
+            # The admin from the settings is the main admin, who adds the other admins in the app.
+            admin.is_superadmin = True
         else:
             print("ADMIN_PASSWORD not set, skipping admin account")
 
@@ -222,6 +224,11 @@ def main() -> None:
                 if student.parent_consent_date is None:
                     student.parent_consent_date = date.today()
             parent = get_or_create_user(db, "parent@example.com", "Demo Veli", DEMO_PASSWORD, Role.parent)
+            if settings.admin_password:
+                # The demo people belong to the main admin.
+                for user in [*students, parent]:
+                    if user.coach_id is None:
+                        user.coach_id = admin.id
             if students[0] not in parent.students:
                 parent.students.append(students[0])
             seed_demo_exams(db, students)

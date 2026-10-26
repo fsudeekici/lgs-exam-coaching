@@ -100,3 +100,31 @@ class ParentUpdate(BaseModel):
     password: Password | None = None
     is_active: bool | None = None
     student_ids: list[int] | None = None
+
+
+class AdminOut(UserRef):
+    email: str
+    is_active: bool
+    is_superadmin: bool
+    login_blocked: bool = False
+    # Active students assigned to this admin.
+    student_count: int = 0
+
+
+class AdminCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    full_name: Name
+    email: EmailStr
+    password: Password
+
+
+class AdminUpdate(BaseModel):
+    """Fields left out (or null) stay unchanged."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    full_name: Name | None = None
+    email: EmailStr | None = None
+    password: Password | None = None
+    is_active: bool | None = None

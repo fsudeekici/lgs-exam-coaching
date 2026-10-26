@@ -1,7 +1,7 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import admin, admin_analytics, admin_meeting, admin_overview, admin_study, admin_users, auth, dashboards, parent, student
+from app.api import admin, admin_admins, admin_analytics, admin_meeting, admin_overview, admin_study, admin_users, auth, dashboards, parent, student
 from app.core.config import settings
 
 # The interactive API docs are a development tool; they are not served in production.
@@ -20,6 +20,7 @@ api.include_router(auth.router)
 api.include_router(dashboards.router)
 api.include_router(admin.router)
 api.include_router(admin_users.router)
+api.include_router(admin_admins.router)
 api.include_router(admin_analytics.router)
 api.include_router(admin_study.router)
 api.include_router(admin_overview.router)

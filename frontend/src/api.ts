@@ -5,6 +5,8 @@ export interface User {
   email: string
   full_name: string
   role: Role
+  /** The main admin: manages the other admins and sees every student. */
+  is_superadmin: boolean
   /** null until the user accepts the KVKK privacy notice. */
   kvkk_consent_at: string | null
 }
@@ -65,6 +67,21 @@ export interface ParentInput {
   email: string
   password: string
   student_ids: number[]
+}
+
+export interface Admin extends UserRef {
+  email: string
+  is_active: boolean
+  is_superadmin: boolean
+  login_blocked: boolean
+  /** Active students coached by this admin. */
+  student_count: number
+}
+
+export interface AdminInput {
+  full_name: string
+  email: string
+  password: string
 }
 
 export interface Exam {
@@ -185,6 +202,13 @@ export const updateStudent = (id: number, changes: Partial<StudentInput & { is_a
 
 export const unblockStudentLogin = (id: number) => request<Student>(`/admin/students/${id}/unblock-login`, { method: 'POST' })
 export const unblockParentLogin = (id: number) => request<Parent>(`/admin/parents/${id}/unblock-login`, { method: 'POST' })
+
+// Main admin only.
+export const fetchAdmins = () => request<Admin[]>('/admin/admins')
+export const createAdmin = (admin: AdminInput) => request<Admin>('/admin/admins', json('POST', admin))
+export const updateAdmin = (id: number, changes: Partial<AdminInput & { is_active: boolean }>) =>
+  request<Admin>(`/admin/admins/${id}`, json('PATCH', changes))
+export const unblockAdminLogin = (id: number) => request<Admin>(`/admin/admins/${id}/unblock-login`, { method: 'POST' })
 
 export const fetchParents = () => request<Parent[]>('/admin/parents')
 export const createParent = (parent: ParentInput) => request<Parent>('/admin/parents', json('POST', parent))

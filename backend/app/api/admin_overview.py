@@ -4,13 +4,14 @@ from fractions import Fraction
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 
-from app.api.deps import DbSession, require_role
+from app.api.deps import CurrentAdmin, DbSession, require_admin
 from app.models import Exam, ExamResult, QuestionLog, Role, User
 from app.schemas.overview import OverviewExam, OverviewRow
+from app.services.coaching import students_of
 from app.services.scoring import exact_net, round_net
 from app.services.weak_topics import find_weak_topics
 
-router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_role(Role.admin))])
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 WEEK_DAYS = 7
 # A student with no question log in this many days (today included) gets a warning.
@@ -45,10 +46,12 @@ def last_exams(db: DbSession, student_ids: list[int]) -> dict[int, OverviewExam]
 
 
 @router.get("/overview", response_model=list[OverviewRow])
-def overview(db: DbSession):
-    """One row per active student, by name."""
+def overview(db: DbSession, admin: CurrentAdmin):
+    """One row per active student of this admin, by name."""
     students = db.scalars(
-        select(User).where(User.role == Role.student, User.is_active).order_by(User.full_name, User.id)
+        select(User)
+        .where(User.role == Role.student, User.is_active, students_of(admin))
+        .order_by(User.full_name, User.id)
     ).all()
     ids = [student.id for student in students]
     today = date.today()

@@ -29,7 +29,7 @@ interface Props {
 
 export default function DashboardLayout({ title, children, narrow }: Props) {
   const { user, logout } = useAuth()
-  const nav = user ? NAV[user.role] : []
+  const nav = !user ? [] : user.is_superadmin ? [...ADMIN_NAV, { to: '/admin/admins', label: 'Yöneticiler' }] : NAV[user.role]
   // Students mostly use a phone: their navigation is a bar at the bottom of the screen there.
   const bottomNav = user?.role === 'student'
 

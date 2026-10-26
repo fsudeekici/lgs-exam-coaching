@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
 import AccountPage from './pages/AccountPage'
+import AdminsPage from './pages/AdminsPage'
 import ExamDetailPage from './pages/ExamDetailPage'
 import ExamsPage from './pages/ExamsPage'
 import KvkkPage from './pages/KvkkPage'
@@ -53,6 +54,9 @@ export default function App() {
               }
             />
             <Route path="/admin/parents" element={<ParentsPage />} />
+          </Route>
+          <Route element={<ProtectedRoute role="admin" superadmin />}>
+            <Route path="/admin/admins" element={<AdminsPage />} />
           </Route>
           <Route element={<ProtectedRoute role="student" />}>
             <Route path="/student" element={<StudentLogPage />} />
